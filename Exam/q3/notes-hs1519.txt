@@ -1,0 +1,32 @@
+T1.1 - Easy : Just variable checking
+
+T1.2 - Easy : Recognize components, prints them to stdout
+
+  Requires: print_component_list.cpp
+  *Requires: build_print_component_list.sh
+
+T1.3 - Medium : Operator overloading
+
+T1.4 - Hard : Takes in network and returns canonicalized network
+
+  Help: There is pseudo-code for this.
+  Depends: T1.3
+
+------------------------------------------
+
+T2.1 - Hard : Operator overloading
+
+T2.2 - Easy : Create 10 network instances
+
+------------------------------------------
+
+T3.1 - Medium : Takes in network and calculate its impedance
+
+T3.2 - Medium : Takes in 2 networks (potential divider), and frequency. Then, prints transfer function
+
+  Depends: T3.1
+
+T3.3 - Easy : Logarithmic spacing. Takes in min, max, and no. of values to print.
+
+T3.4 - Hard: Putting everything together
+  Depends: T3.1, T3.2, T3.3

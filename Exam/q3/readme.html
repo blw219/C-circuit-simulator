@@ -1,0 +1,328 @@
+<h1 id="q3---passive-networks">Q3 - Passive Networks</h1>
+<h1 id="background">Background</h1>
+<h2 id="representing-simplified-passive-networks">Representing simplified passive networks</h2>
+<p>Passive networks are composed of combinations of capacitors, inductors, and resistors. In general a passive network can contain any combination of wiring, but a useful restricted case is to build two terminal (single input + single output) circuits that only consist of parallel and serial compositions of other two-terminal circuits. In this restricted approach, a passive network can consist of:</p>
+<ul>
+<li><p>A primitive component: resistor, capacitor, or inductor.</p></li>
+<li><p>Serial composition of networks.</p></li>
+<li><p>Parallel composition of networks. The input and outputs terminals of the sub-networks are connected, so that the parallel composition is still a two terminal network.</p></li>
+</ul>
+<p>In order to represent such networks as in code we use the following structure:</p>
+<pre><code>struct Network
+{
+    char type;
+    float value;
+    vector&lt;Network&gt; parts;
+};</code></pre>
+<p>The meaning of the members is:</p>
+<ul>
+<li><p><code>type</code> : A single character specifying the network type. For primitive components this will be one of <code>R</code>, <code>L</code>, or <code>C</code>. For serial composition this is <code>&amp;</code> (ampersand), and for parallel composition it is <code>|</code> (pipe).</p></li>
+<li><p><code>value</code> : For primitive components this contains the non-negative value of the component, given as Ohms, Henries, or Farads. For non-primitive networks it is 0.</p></li>
+<li><p><code>parts</code> : For non-primitive networks this is a non-empty list of networks to combine in serial or parallel. For primitive components the parts list is empty.</p></li>
+</ul>
+<p>Examples of creating primitive components in code are:</p>
+<pre><code>Network r_1 =   { &#39;R&#39;, 1,     {} }; // A 1 Ohm resistor
+Network c_2 =   { &#39;C&#39;, 2,     {} }; // A 2 Farad capacitor
+Network l_1mH = { &#39;L&#39;, 0.001, {} }; // A 1 milli-Henry inductor</code></pre>
+<p>These could then be combined in a number of ways:</p>
+<pre><code>Network lc =  { &#39;|&#39;, 0,  { l_1mH, c_2 } };  // Inductor and capacitor in parallel
+Network rc =  { &#39;|&#39;, 0,  { r_1, c_2 } };    // Resistor and capacitor in parallel
+Network lcr = { &#39;&amp;&#39;, 0,  { r_1, lc, cr } }; // Series connection of multiple circuits </code></pre>
+<p>The <code>lcr</code> variable represents the following network:</p>
+<pre><code>  +--L0.001--+
+  |          |  
+--+          +--
+  |          |  
+  +----C2----+  </code></pre>
+<p>while the final <code>lcr</code> variable represents the following network:</p>
+<pre><code>        +--L0.001--+   +--R1--+
+        |          |   |      |
+---R1---+          +---+      +----
+        |          |   |      |
+        +----C2----+   +--C2--+</code></pre>
+<h2 id="network-io">Network IO</h2>
+<p>Networks are read and written as text using the following format:</p>
+<ul>
+<li><p>Primitive components: the letter <code>R</code>, <code>C</code>, or <code>L</code>, followed by the value of the component as a decimal value.</p></li>
+<li><p>Non-primitive networks: non-primitive networks begin with <code>(</code>, then contain one or more network parts separated by <code>&amp;</code> or <code>|</code>, and finish with <code>)</code>.</p></li>
+</ul>
+<p>The numeric value of primitives can be given with or without an exponent, but should be accurate to at least four significant digits. The default output format used by <code>ostream</code> for printing a <code>float</code> will always meet this requirement.</p>
+<p>If a non-primitive network only contains one part, then it should be read as a degenerate series connection with only one component.</p>
+<p>Examples of IO are:</p>
+<ul>
+<li><code>R1</code> : A 1 Ohm resistor</li>
+<li><code>C2.0000</code> : A 2 Farad capacitor</li>
+<li><code>L0.001</code> : A 1mH inductor</li>
+<li><code>(R1|C2)</code> : A 1 ohm and 2 Farad capacitor in parallel</li>
+<li><code>( R1 &amp; C1e-3 )</code> : A 1 ohm and 1mF capacitor in series</li>
+<li><code>(R1|R2|R3|R4)</code> : Four resistors connected in parallel, with resistance from 1 to 4 Ohms.</li>
+<li><code>(C1&amp;C2&amp;C3&amp;C4)</code> : Four capacitors connected in series, with capacitance from 1 to 4 Farads.</li>
+<li><code>((R1&amp;C1)|(C1&amp;L1))</code> : A serially connected resistor and capacitor, in parallel with a serially connected capacitor and inductor.</li>
+<li><code>(R1)</code> : A single resistor connected in a degenerate series with nothing.</li>
+<li><code>(R1&amp;(L0.001|C2)&amp;(R1|C2))</code> : The <code>lcr</code> example given above.</li>
+</ul>
+<h2 id="canonical-network-form">Canonical network form</h2>
+<p>Not all networks can be expressed as combinations of parallel and serial components, but even for those that can be, there is no single unique representation. For example, the networks <code>(R2|R3)</code>, and <code>(R3|R2)</code> have a different structure (both in text and when converted to a <code>Network</code>), but represent the &quot;same&quot; circuit in an electrical sense.</p>
+<p><em>Canonicalisation</em> is the process of trying to restrict the set of possible representations, so that if two networks describe the same circuit structure, then they also have the same network representation. Two basic approaches to canonicalisation for these circuits are:</p>
+<ol style="list-style-type: decimal">
+<li><p><em>Flattening parts vectors</em>. The two non-primitive networks <code>(C1&amp;(C2&amp;L3))</code> and <code>((C1&amp;C2)&amp;L3)</code> can be &quot;flattened&quot; into the circuit <code>(C1&amp;C2&amp;L3)</code>. Similarly <code>(C1|(C2|L3))</code> can be flattened to <code>(C1|C2|L3)</code>. However, the network <code>(C1|(C2&amp;L3))</code> cannot be flattened. Degenerate non-primitives such as <code>(C1)</code> can also be flattened to <code>C1</code>.</p></li>
+<li><p><em>Sort the parts vector</em>: In the first example of <code>(R2|R3)</code> versus <code>(R3|R2)</code>, if we decide that smaller values come before larger values, then <code>(R2|R3)</code> is the only possible order. Similarly, if we decide that capacitors must come before resistors, then <code>(R2&amp;C3)</code> would be canonicalised to <code>(C3&amp;R2)</code>.</p></li>
+</ol>
+<p>These two approaches can be applied to any network, by recursively canonicalising, flattening, and then sorting the parts. Pseudo-code for this is:</p>
+<pre><code>function make_canonical(c)
+begin
+    if is_primitive(c) begin
+        return c
+    end
+    parts=c.parts   # Make a copy of the parts list so we can modify it
+    for i in length(parts) begin
+        parts[i] = make_canonical(parts[i])  # Recursively canonicalise each part
+    end
+    parts = flatten(c.type, parts)   # Flatten any parts with the same type
+    parts = sort(parts)              # Sort the final set of parts
+    return Network( c.type , parts ) 
+end</code></pre>
+<p>This process should result in a functionally equivalent network which still contains the same primitives, but for which there is only one representation. For simplicity, the pseudo-code does not handle flattening of degenerate series.</p>
+<p>This canonicalisation requires a sort order, so that we can define a less-than operator on <code>Network</code>. We define this as first sorting by the type of the network, then by the value or parts list. The full sort order is then:</p>
+<ol style="list-style-type: decimal">
+<li><p>By type: <code>&amp;</code> &lt; <code>C</code> &lt; <code>L</code> &lt; <code>R</code> &lt; <code>|</code>. Note that this follows the standard character ordering for ASCII, which is also the ordering for <code>char</code>.</p></li>
+<li><p>By value: for primitive components of the same type, lower values should appear before larger values.</p></li>
+<li><p>By parts: for non-primitive networks of the same type the lexicographical order of the two vectors of parts should be used; lexicographical ordering is the same as the default ordering for <code>vector</code>.</p></li>
+</ol>
+<p>Examples of ordering primitives are: <code>C0.5</code> &lt; <code>C1</code> &lt; <code>C2</code> &lt; <code>R1e-3</code> &lt; <code>R1</code> &lt; <code>L0.3</code> &lt; <code>L10</code>. Any serial composition (<code>&amp;</code>) will compare less than any primitive, while any primitive will compare less than any parallel composition (<code>|</code>). For parallel compositions, we have <code>(C1|C2)</code> &lt; <code>(R1|C2)</code> because <code>C1</code> &lt; <code>R1</code>, and <code>(C2|L0.1)</code> &lt; <code>(C2|R3)</code> because <code>L0.1</code> &lt; <code>R3</code>.</p>
+<p>Combining the sort order with the canonicalisation allows us to find a unique representation for any given network.</p>
+<p>For example, for the input <code>((C1|L3)|(R2&amp;R1)|(L1|C1))</code>:</p>
+<ol style="list-style-type: decimal">
+<li><code>((C1|L3)|(R2&amp;R1)|(L1|C1))</code> : Flattened inner (no effect)</li>
+<li><code>((C1|L3)|(R1&amp;R2)|(C1|L1))</code> : Sorted inner</li>
+<li><code>(C1|L3|(R1&amp;R2)|C1|L1))</code> : Flattened outer</li>
+<li><code>((R1&amp;R2)|C1|C1|L1|L3)</code> : Sorted outer</li>
+</ol>
+<p>Other examples are:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Original</th>
+<th>Canonical</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>( R1.3 &amp; C1.2 &amp; L2 &amp; L0.5)</code></td>
+<td><code>( C1.2 &amp; L0.5 &amp; L2 &amp; R1.3)</code></td>
+</tr>
+<tr class="even">
+<td><code>((C1.2 &amp; L2) &amp; L0.5 &amp; (R1.3))</code></td>
+<td><code>( C1.2 &amp; L0.5 &amp; L2 &amp; R1.3)</code></td>
+</tr>
+<tr class="odd">
+<td><code>(((R4)|R2)|R1)</code></td>
+<td><code>(R1|R2|R4)</code></td>
+</tr>
+<tr class="even">
+<td><code>((R4|R2|(C3&amp;C1))|R1)</code></td>
+<td><code>( (C1&amp;C3) | R1 | R2 | R4)</code></td>
+</tr>
+<tr class="odd">
+<td><code>((R4&amp;R2&amp;(C3|C1))&amp;R1)</code></td>
+<td><code>( R1 &amp; R2 &amp; R4 &amp; (C1|C3))</code></td>
+</tr>
+</tbody>
+</table>
+<p><em>Note: spaces are irrelevant in the printed representation.</em></p>
+<h2 id="complex-impedance">Complex impedance</h2>
+<p>The complex impedance of a network is defined in terms of a frequency omega, and follows the standard rules for impedance:</p>
+<ul>
+<li><code>Z( omega, Rv ) = v</code></li>
+<li><code>Z( omega, Cv ) = -j/(omega*v)</code></li>
+<li><code>Z( omega, Lv ) = j*omega*v</code></li>
+<li><code>Z( omega, (p1&amp;p2&amp;...&amp;pn) ) = Z(omega,p1) + Z(omega,p2) + ... + Z(omega,pn)</code></li>
+<li><code>Z( omega, (p1|p2|...|pn) ) = 1 / ( 1/Z(omega,p1) + 1/Z(omega,p2) + ... + 1/Z(omega,pn) )</code></li>
+</ul>
+<p>Examples of impedances of particular networks are:</p>
+<table>
+<thead>
+<tr class="header">
+<th>Network</th>
+<th><code>omega=0.5</code></th>
+<th><code>omega=1</code></th>
+<th><code>omega=2</code></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>R1</code></td>
+<td><code>1</code></td>
+<td><code>1</code></td>
+<td><code>1</code></td>
+</tr>
+<tr class="even">
+<td><code>C1</code></td>
+<td><code>-2j</code></td>
+<td><code>-j</code></td>
+<td><code>-0.5j</code></td>
+</tr>
+<tr class="odd">
+<td><code>L1</code></td>
+<td><code>0.5j</code></td>
+<td><code>j</code></td>
+<td><code>2j</code></td>
+</tr>
+<tr class="even">
+<td><code>(R1&amp;C1)</code></td>
+<td><code>1  -2j</code></td>
+<td><code>1  -j</code></td>
+<td><code>1 -0.5j</code></td>
+</tr>
+<tr class="odd">
+<td><code>(C1&amp;C2)</code></td>
+<td><code>-1.5j</code></td>
+<td><code>0</code></td>
+<td><code>1.5j</code></td>
+</tr>
+</tbody>
+</table>
+<h2 id="transfer-functions">Transfer functions</h2>
+<p>Given two networks <code>n1</code> and <code>n2</code>, we can consider them as a potential divider:</p>
+<pre><code>Vin -----+
+         n1
+         +----- Vout
+         n2
+         |
+        Gnd</code></pre>
+<p>The transfer function for this potential divider can be expressed as:</p>
+<pre><code>H(omega, n1, n2) = Vout / Vin
+                 = Z(omega,n2) / ( Z(omega,n1) + Z(omega,n2))</code></pre>
+<p>For example, given the network <code>n1=R2</code> and <code>n2=C3</code>, we would end up with the following:</p>
+<table>
+<thead>
+<tr class="header">
+<th><code>omega</code></th>
+<th><code>Z(omega,n1)</code></th>
+<th><code>Z(omega,n2)</code></th>
+<th><code>H = Vout / Vin</code></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td>2</td>
+<td>0 - 0.33333i</td>
+<td>0.027027 - 0.162162i</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td>2</td>
+<td>0 - 0.16667i</td>
+<td>0.006897 - 0.082759i</td>
+</tr>
+<tr class="odd">
+<td>4</td>
+<td>2</td>
+<td>0 - 0.08333i</td>
+<td>0.001733 - 0.041594i</td>
+</tr>
+</tbody>
+</table>
+<h1 id="tasks">Tasks</h1>
+<h2 id="t1---network-operations-35">T1 - Network operations (35%)</h2>
+<h3 id="t1.1---is_primitive-function-5">T1.1 - is_primitive function (5%)</h3>
+<p>Implement the function <code>is_primitive</code>, which returns true if the argument is a primitive component, and false otherwise.</p>
+<h3 id="t1.2---component-list-10">T1.2 - Component list (10%)</h3>
+<p>Write a program called <code>print_component_list.cpp</code>. This program should read a single <code>Network</code> from <code>stdin</code>, and print out the primitive components that it contains to <code>stdout</code>. Each component should be printed on a separate line.</p>
+<p>No specific order is required, as long as each component gets printed once for each time it appears in the input network.</p>
+<p>Component values do not need to exactly match the input text, as long as the values are correct to four significant digits.</p>
+<p>Example usage:</p>
+<pre><code>$ ./build_print_component_list.sh
+$ echo &quot;(R1 | R2.4 | ( C1.99999999 &amp; L2) | L2 )&quot; | ./print_component_list
+R1
+R2.40000
+C2
+L2.00
+L2</code></pre>
+<p><em>Note: The varying numbers of output digits are to make the point that it is the numeric</em> <em>value that matters in Network IO, not the textual representation. No sensible code</em> <em>would print <code>L2.00</code> and <code>L2</code> for the same component, but it is valid.</em></p>
+<h3 id="t1.3---network-comparison-10">T1.3 - Network comparison (10%)</h3>
+<p>Declare and define an implementation of the less-than operator for <code>Network</code>. The declaration should be in <code>network.hpp</code>, and the definition in <code>network_ops.cpp</code></p>
+<h3 id="t1.4---canonicalise-10">T1.4 - Canonicalise (10%)</h3>
+<p>Implement the function <code>canonicalise</code>.</p>
+<h2 id="t2---network-io-20">T2 - Network IO (20%)</h2>
+<p>The program <code>test_network_io.cpp</code> can be used to check whether input and output are working, and may be useful in this question.</p>
+<h3 id="t2.1---writing-of-networks-10">T2.1 - Writing of networks (10%)</h3>
+<p>Complete the implementation of the <code>&lt;&lt;</code> operator for <code>Network</code>.</p>
+<h3 id="t2.2---create-test-cases-10">T2.2 - Create test-cases (10%)</h3>
+<p>Complete the function <code>create_test_networks</code> so that it returns at least ten <code>Network</code> instances that can be used to test that IO operates correctly.</p>
+<p>You should try to anticipate corner cases that might not work when writing circuits.</p>
+<p><em>Hint: you may find this function useful for other test purposes.</em> <em>Note: you are allowed to have (lots) more than ten test-cases if you wish.</em></p>
+<h2 id="t3---impedance-45">T3 - Impedance (45%)</h2>
+<h3 id="t3.1---calculating-impedance-10">T3.1 - Calculating impedance (10%)</h3>
+<p>Complete the function <code>impedance</code> so that it can calculate impedance for all five network types.</p>
+<h3 id="t3.2---transfer-function-10">T3.2 - Transfer function (10%)</h3>
+<p>Complete the function <code>transfer_function</code> which takes three parameters:</p>
+<ol style="list-style-type: decimal">
+<li><p>A Network <code>n1</code>.</p></li>
+<li><p>A network <code>n2</code>.</p></li>
+<li><p>A vector of floats <code>omega</code>.</p></li>
+</ol>
+<p>The return value should be a complex vector containing the transfer function for the potential divider at each value of omega.</p>
+<h3 id="t3.3---logarithmic-spacing-function-10">T3.3 - Logarithmic spacing function (10%)</h3>
+<p>Implement the function <code>make_log10_space(a,b,n)</code>.</p>
+<p>Given the range <code>[a,b]</code>, the function should return <code>n</code> points, equally spaced logarithmically (base-10). The first point should be <code>a</code>, and the last point should be <code>b</code>.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Input</th>
+<th>Output</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>a=1, b=10, n=2</code></td>
+<td><code>[1, 10]</code></td>
+</tr>
+<tr class="even">
+<td><code>a=1, b=100, n=3</code></td>
+<td><code>[1, 10, 100]</code></td>
+</tr>
+<tr class="odd">
+<td><code>a=0.01, b=100, n=3</code></td>
+<td><code>[0.01, 10, 100]</code></td>
+</tr>
+<tr class="even">
+<td><code>a=1, b=10, n=5</code></td>
+<td><code>[1, 1.7783, 3.1623, 5.6234, 10]</code></td>
+</tr>
+<tr class="odd">
+<td><code>a=0.1, b=10, n=5</code></td>
+<td><code>[0.1, 0.31623, 1, 3.1623, 10]</code></td>
+</tr>
+</tbody>
+</table>
+<p>The above values are rounded to an arbitrary number of digits for display - the function does not need to perform any rounding. Any reasonable calculation order using <code>float</code> or <code>double</code> expressions and functions is acceptable.</p>
+<h3 id="t3.4---transfer-function-program-15">T3.4 - Transfer function program (15%)</h3>
+<p>Create a program <code>print_transfer_function.cpp</code> which reads two networks, and then prints out the properties of the transfer function at logarithmically spaced points.</p>
+<p>The program should take three optional command-line arguments:</p>
+<ol style="list-style-type: decimal">
+<li><code>a</code> (default = 1)</li>
+<li><code>b</code> (default = 100)</li>
+<li><code>n</code> (default = 10)</li>
+</ol>
+<p>The program should read two networks <code>n1</code> and <code>n2</code> from <code>stdin</code>, and then calculate the transfer function of <code>n1</code> and <code>n2</code> when treated as a potential divider at <code>n</code> logarithmically (base-10) spaced values of <code>omega</code> in the inclusive range <code>[a,b]</code></p>
+<p>The printed output should consist of three columns seperated by commas, with one row per value of <code>omega</code>.</p>
+<ol style="list-style-type: decimal">
+<li><code>Omega</code> : frequency</li>
+<li><code>abs(H)</code> : Absolute value of the transfer function</li>
+<li><code>arg(H)</code> : Phase of the transfer function in radians</li>
+</ol>
+<p>White-space may be inserted within a line if desired.</p>
+<p>Example output:</p>
+<pre><code>$ echo &quot;C1.5 (L0.5&amp;R1)&quot; | ./print_transfer_function 0.1 10 9
+   0.1,       0.149623,  1.47076
+   0.177828,  0.264601,  1.39276
+   0.316228,  0.461972,  1.25378
+   0.562341,  0.770448,  1.00931
+   1,         1.10282,   0.628796
+   1.77828,   1.18999,   0.251803
+   3.16228,   1.10282,   0.0664762
+   5.62341,   1.03879,   0.0138287
+  10,         1.01298,   0.0025974</code></pre>
+<p><em>Note: These results did not come from a C++ program, and do not reflect the exact numeric values or whitespace formatting required.</em></p>
