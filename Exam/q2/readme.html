@@ -1,0 +1,285 @@
+<h1 id="q2---tensors">Q2 - Tensors</h1>
+<h1 id="background">Background</h1>
+<h2 id="tensors">Tensors</h2>
+<p><em>Note: a lot of this question can be done purely in terms of standard</em> <em>knowledge of matrices.</em></p>
+<p>A Tensor is a generalisation of the ideas of scalars, vectors and matrices to larger dimensions. Tensors are widely found in physics and electrodynamics, and more recently have been used as the underlying primitive for machine learning frameworks such as Tensorflow.</p>
+<p>Scalars, column vectors, and matrices are special-cases of tensors:</p>
+<ul>
+<li>Scalar : A single number.</li>
+<li>Vector : 1D array of numbers with a single index.</li>
+<li>Matrix : A 2D matrix (array) of numbers accessed using two indices.</li>
+<li>Tensor : An order-n tensor is an n-dimensional array of numbers accessed using n indices.</li>
+</ul>
+<p>Each order-n tensor has <code>n</code> dimension lengths, with each length describing the size of the tensor in that dimension. The length of a dimension may have length 1 (unitary), but zero length dimensions are not allowed.</p>
+<p>For simplicity we will <strong>not</strong> consider tensors of order less than 2, and scalars, row vectors, and column vectors will be represented as order-2 matrices with one or two unitary dimensions.</p>
+<ul>
+<li>Scalar (order-2) : Dimensions are <code>[1,1]</code></li>
+<li>ColVec (order-2) : Dimensions are <code>[n,1]</code>, where <code>n&gt;=1</code> gives the number of rows.</li>
+<li>RowVec (order-2) : Dimensions are <code>[1,m]</code>, where <code>m&gt;=1</code> gives the number of columns</li>
+<li>Matrix (order-2) : Has two dimensions, describing the number of columns and rows. Its dimensions are <code>[n,m]</code>, where <code>n&gt;=1</code> and <code>m&gt;=1</code></li>
+<li>Tensor (order-n) : Has n dimensions, with a length specified for each of the n dimensions. Its dimensions are <code>[d_1,d_2,...,d_n ]</code>, where <code>d_i&gt;=1</code></li>
+</ul>
+<p>Given an order-n tensor <code>D</code> with dimensions <code>[d_1,d_2,...,d_n]</code> we will use the notation <code>D[i_1,i_2,...,i_n]</code> to represent the value at index <code>i_1,i_2,...,i_n</code>, where <code>0 &lt;= i_j &lt; d_j</code> for <code>1 &lt;= j &lt;= n</code>.</p>
+<h2 id="tensor-operations">Tensor operations</h2>
+<h3 id="tensor-addition">Tensor addition</h3>
+<p>Tensors addition is a generalisation of matrix addition:</p>
+<ul>
+<li>Scalar + Scalar : <code>C[0,0] = A[0,0] + B[0,0]</code></li>
+<li>ColVec + ColVec : <code>C[i,0] = A[i,0] + B[i,0]</code></li>
+<li>RowVec + RowVec : <code>C[0,i] = A[0,i] + B[0,i]</code></li>
+<li>Matrix + Matrix : <code>C[i,j] = A[i,j] + B[i,j]</code></li>
+<li>Tensor3 + Tensor3 : <code>C[i,j,k] = A[i,j,k] + B[i,j,k]</code></li>
+<li>TensorN + TensorN : <code>C[d_1,...,d_n] = A[d_1,...,a_n] + B[d_1,...,d_n]</code></li>
+</ul>
+<p>The indices <code>i,j,k</code>, or <code>d_1,...,d_n</code> range over the length of each object in that dimension.</p>
+<p>Mathematically we require that the objects being added have the same dimensions. However, there is a common convention in machine-learning that says that unitary (length-1) dimensions can be &quot;broadcast&quot; to match non-unitary dimension, so that they produce a consistent result. This allows for common operations such as adding a scalar to a matrix:</p>
+<ul>
+<li>Scalar + ColVec : <code>C[i,0] = A[0,0] + B[i,0]</code></li>
+<li>ColVec + RowVec : <code>C[i,j] = A[i,0] + B[0,j]</code></li>
+<li>Matrix + Scalar : <code>C[i,j] = A[i,j] + B[0,0]</code></li>
+<li>Matrix + ColVec : <code>C[i,j] = A[i,j] + B[i,0]</code></li>
+<li>Matrix + RowVec : <code>C[i,j] = A[i,j] + B[0,j]</code></li>
+<li>Tensor3 + Scalar : <code>C[i,j,k] = A[i,j,k] + B[0,0]</code></li>
+<li>Tensor3 + Matrix : <code>C[i,j,k] = A[i,j,k] + B[i,j]</code></li>
+<li>Tensor4 + Tensor3 : <code>C[i,j,k,m] = A[i,j,k,m] + B[i,j,k]</code></li>
+</ul>
+<h3 id="tensor-multiplication">Tensor multiplication</h3>
+<p>For our &quot;normal&quot; tensors we have the following multiplications between different dimension objects:</p>
+<ul>
+<li>Scalar * Scalar : <code>C[0,0]   = A[0,0] * B[0,0]</code></li>
+<li>ColVec * Scalar : <code>C[i,0]   = A[i,0] * B[0,0]</code></li>
+<li>RowVec * ColVec : <code>C[0,0]   = sum( A[0,k] * B[k,0], k)</code></li>
+<li>ColVec * RowVec : <code>C[i,j]   = A[i,0] * B[0,j]</code></li>
+<li>Matrix * ColVec : <code>C[i,0]   = sum( A[i,k] * B[k,0], k)</code></li>
+<li>Matrix * Matrix : <code>C[i,j]   = sum( A[i,k] * B[k,j], k)</code></li>
+</ul>
+<p>The indices i,j, and k range over the length of each object in that dimension. Where the index k appears in both A and B, the lengths must match, as expected for normal vector and matrix operations. Note that the cases where there is no explicit <code>sum</code> are just summations over a single element, and so are still degenerate sums.</p>
+<p><em>Note: full implementation of tensor multiplication is complicated, but is only</em> <em>relevant for half of one sub-question. It is worth proceeding based on normal</em> <em>matrices first.</em></p>
+<p>There are a number of possible ways of defining general tensor multiplication, with different mathematical and coding frameworks choosing different conventins.</p>
+<p>Here we use one of the simplest definitions: given two tensors <code>A</code> (of order <code>a_1..a_n</code>) and <code>B</code> (of order <code>b_1..b_m</code>), we define multiplication <code>C = A * B</code> as follows:</p>
+<pre><code>C[a_1, ...., a_{n-1} , b_2, ..., b_m] = sum( A[a_1, ...a_{n-1}, k] * B[ k, b_2, ..., b_m], k )</code></pre>
+<p>The <code>k</code> dimension length in each tensor (last dimension in A, first dimension in B) must match, as with standard matrix/vector multiplication. This definition of multiplication matches all of our standard notions of matrix/vector/scalar multiplication.</p>
+<p>Applying these rules, we can define an order-3 tensor times a matrix:</p>
+<ul>
+<li>Tensor3 * Matrix : <code>C[a_1,a_2, b_2] = sum( A[a_1,a_2, k] * B[k, b_2], k )</code></li>
+</ul>
+<p>As pseudo-code, this <code>Tensor3 * Tensor2</code> multiplication might look like:</p>
+<pre><code>
+for ia1 = 0..a_1-1
+  for ia2 = 0..a_2-1
+    for ib2 = 0..b_2-1
+      C[ia0,ia1,ib2] = 0
+      for k = 0..a_3-1
+        C[ia0,ia1,ib2] = C[ia0,ia1,ib2] + A[ia0,ia1,k] * A[k,ib2]</code></pre>
+<p>Or an order-3 tensor times an order-3 tensor:</p>
+<ul>
+<li>Tensor3 * Tensor3 : <code>C[a_1,a_2, b_2,b_3] = sum( A[a_1,a_2, k] * B[k, b_2,b_3], k)</code></li>
+</ul>
+<h2 id="tensor-representation-in-c">Tensor Representation in C++</h2>
+<p>The class <code>Tensor</code> in <code>tensor.hpp</code> represents an abstract tensor of any order and dimensions. The member <code>size()</code> returns a vector describing the length in each dimension. The number of elements in the <code>size()</code> vector gives the order of the tensor, regardless of how many unitary (length-1) dimensions there are. So for example, a &quot;scalar&quot; tensor would return dimensions <code>[1,1]</code>.</p>
+<h3 id="indices">Indices</h3>
+<p><em>Note: the behaviour of indices is flexible, which makes them complex. You may</em> <em>wish to implement the &quot;simple&quot; behaviour first, then come back to complex</em> <em>indices as time allows.</em></p>
+<p>As a convenience measure, when reading or writing the vector it is possible to give an index which is too small or too large, as long as certain constraints are met:</p>
+<ul>
+<li><p>The index may be shorter (contain fewer values) than the tensor's dimensions. In this case, the index is implicitly extended with 0 until it matches the tensor dimension.</p></li>
+<li><p>The index may be longer (contain more values) than the tensor's dimensions. In this case the extra dimensions must all specify offset 0, otherwise the index is not valid.</p></li>
+</ul>
+<p>In addition, when <strong>reading</strong> from a tensor we allow for broadcasting of the dimension:</p>
+<ul>
+<li>If the length of a dimension is 1, then any offset in that dimension will be &quot;broadcast&quot;, and map to offset 0 in that dimension. For broadcast purposes, all tensors are assumed to be unitary in all dimensions higher than their order.</li>
+</ul>
+<p>For example, if we have a dimension <code>[4,5]</code> matrix we could read or write it at the index <code>[2,3]</code>, so the index order matches the matrix order. However, we could also read or write it at <code>[1]</code>, which would be implicitly extended to <code>[1,0]</code>, or we could index it using <code>[3,2,0,0]</code>, which would be implicitly contracted to <code>[3,2]</code>. If we were trying to read the tensor at index <code>[2,3,2]</code>, then the extra index <code>2</code> would be implicitly broadcast, resulting in <code>[2,3]</code>; indices <code>[2,3,4]</code> and <code>[2,3,100]</code> would also result in the same element at <code>[2,3]</code>.</p>
+<p>Any out of range indices are invalid, such as <code>[6,7]</code> which exceeds the size of the tensor, or writing to <code>[2,3,2]</code> as the extra dimension's offset is non-zero. Implementations may respond in any way to invalid accesses, including crashing. It is often helpful to use assertions to detect the precise point at which an invalid index is used, though this is not required.</p>
+<p>The following table gives examples of this matrix dimensions, indices, and how they map for read and write. Note that this was compiled manually, and while it has been checked multiple times, there is an outside chance of error.</p>
+<table>
+<thead>
+<tr class="header">
+<th>Matrix</th>
+<th>Index</th>
+<th>Maps to (read)</th>
+<th>Maps to (write)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>[1,1]</code></td>
+<td><code>[0,0]</code></td>
+<td><code>[0,0]</code></td>
+<td><code>[0,0]</code></td>
+</tr>
+<tr class="even">
+<td><code>[1,1]</code></td>
+<td><code>[0]</code></td>
+<td><code>[0,0]</code></td>
+<td><code>[0,0]</code></td>
+</tr>
+<tr class="odd">
+<td><code>[1,1]</code></td>
+<td><code>[]</code></td>
+<td><code>[0,0]</code></td>
+<td><code>[0,0]</code></td>
+</tr>
+<tr class="even">
+<td><code>[1,1]</code></td>
+<td><code>[0,0,0]</code></td>
+<td><code>[0,0]</code></td>
+<td><code>[0,0]</code></td>
+</tr>
+<tr class="odd">
+<td><code>[1,1]</code></td>
+<td><code>[0,3]</code></td>
+<td><code>[0,0]</code></td>
+<td>Invalid</td>
+</tr>
+<tr class="even">
+<td><code>[1,1]</code></td>
+<td><code>[2,0]</code></td>
+<td><code>[0,0]</code></td>
+<td>Invalid</td>
+</tr>
+<tr class="odd">
+<td><code>[3,1]</code></td>
+<td><code>[2,0]</code></td>
+<td><code>[2,0]</code></td>
+<td><code>[2,0]</code></td>
+</tr>
+<tr class="even">
+<td><code>[3,1]</code></td>
+<td><code>[2,0,0]</code></td>
+<td><code>[2,0]</code></td>
+<td><code>[2,0]</code></td>
+</tr>
+<tr class="odd">
+<td><code>[3,1]</code></td>
+<td><code>[2,1]</code></td>
+<td><code>[2,0]</code></td>
+<td>Invalid</td>
+</tr>
+<tr class="even">
+<td><code>[3,1]</code></td>
+<td><code>[4,1]</code></td>
+<td>Invalid</td>
+<td>Invalid</td>
+</tr>
+<tr class="odd">
+<td><code>[3,1]</code></td>
+<td><code>[2,0,0,0]</code></td>
+<td><code>[2,0]</code></td>
+<td><code>[2,0]</code></td>
+</tr>
+<tr class="even">
+<td><code>[3,1]</code></td>
+<td><code>[2,0,0,1]</code></td>
+<td><code>[2,0]</code></td>
+<td>Invalid</td>
+</tr>
+<tr class="odd">
+<td><code>[4,4]</code></td>
+<td><code>[3,2]</code></td>
+<td><code>[3,2]</code></td>
+<td><code>[3,2]</code></td>
+</tr>
+<tr class="even">
+<td><code>[4,4]</code></td>
+<td><code>[3,2,0]</code></td>
+<td><code>[3,2]</code></td>
+<td><code>[3,2]</code></td>
+</tr>
+<tr class="odd">
+<td><code>[4,4]</code></td>
+<td><code>[3]</code></td>
+<td><code>[3,0]</code></td>
+<td><code>[3,0]</code></td>
+</tr>
+<tr class="even">
+<td><code>[4,4]</code></td>
+<td><code>[3,3,0,0]</code></td>
+<td><code>[3,3]</code></td>
+<td><code>[3,3]</code></td>
+</tr>
+<tr class="odd">
+<td><code>[4,4]</code></td>
+<td><code>[3,3,0,1]</code></td>
+<td><code>[3,3]</code></td>
+<td>Invalid</td>
+</tr>
+</tbody>
+</table>
+<p>The compiler-defined type <code>size_t</code> is used for indices and lengths. The type <code>int</code> may only be 32-bits wide for efficiency reasons, but in a 64-bit machine we can allocate arrays much larger than <span class="math inline">2<sup>31</sup> − 1</span> elements. <code>size_t</code> is built-in unsigned integer type which is guaranteed to be able to hold indexes into the longest array that can be allocated.</p>
+<h3 id="testing-tensor-maths">Testing tensor maths</h3>
+<p>The program <code>test_tensor_maths.cpp</code> provides minimal test-cases for addition and subtraction. These test-cases are far from complete, and each case took a few minutes to generate manually. However, manual calculation greatly increased understanding of how multiplication works, plus considering edge cases found a number of errors.</p>
+<p>You are welcome to modify/extend/copy this program, <strong>or</strong> you might find it easier to start from scratch if you find it difficult to understand.</p>
+<h1 id="deliverables">Deliverables</h1>
+<p>In this question you should assume that any programs will be compiled using exactly three source files: <code>tensor_core.cpp</code>, <code>tensor_maths.cpp</code>, and the program's source file containing main.</p>
+<h2 id="t1-tensor-operations-25">T1 : Tensor operations (25%)</h2>
+<h3 id="t1.1-add-a-function-tensororder-5">T1.1 : Add a function <code>Tensor::order</code> (5%)</h3>
+<p>Add a new non-<code>virtual</code> function called <code>order</code> to the <code>Tensor</code> base-class which returns the order of the tensor as an integer.</p>
+<p>The definition can be added in either the <code>tensor.hpp</code> header or in <code>tensor.cpp</code>.</p>
+<h3 id="t1.2-implement-is_vector-5">T1.2 : Implement <code>is_vector</code> (5%)</h3>
+<p>Implement the function <code>is_vector</code>. This returns <code>true</code> if a given tensor has at most one non-unitary dimension.</p>
+<p><em>Node: a tensor of any order might be a vector; it depends on it's dimensions.</em></p>
+<h3 id="t1.3-implement-tensorvolume-5">T1.3 : Implement <code>Tensor::volume()</code> (5%)</h3>
+<p>Modify the member function <code>volume</code> in <code>tensor.cpp</code> so that it returns the total number of numeric elements in a tensor, based on the current <code>size</code>.</p>
+<h3 id="t1.4-implement-offset_to_index-10">T1.4 : Implement <code>offset_to_index</code> (10%)</h3>
+<p>Implement the function <code>offset_to_index</code>. This is defined to be the inverse of <code>index_to_offset(index,false)</code>.</p>
+<p>The existing function <code>index_to_offset</code> takes the dimensions of a tensor plus an element index within those dimensions, and returns a unique non-zero linear offset for that element.</p>
+<h2 id="t2-higher-order-tensors-40">T2 : Higher-order tensors (40%)</h2>
+<h3 id="t2.1-create-an-order-3-tensor-10">T2.1 : Create an order-3 tensor (10%)</h3>
+<p>Create a class called <code>Order3Tensor</code> in a header <code>order_3_tensor.hpp</code> which can represent order-3 tensors. Its constructor should take one parameter of type <code>vector&lt;size_t&gt;</code> giving the dimensions of the vector, which will always be of length 3.</p>
+<p>You can use any parts of <code>MatrixTensor</code> as a starting point.</p>
+<h3 id="t2.2-create-a-generalised-tensor-15">T2.2 : Create a generalised tensor (15%)</h3>
+<p>Create a class called <code>OrderNTensor</code> in a header <code>order_n_tensor.hpp</code> which can represent order-n tensors, so it can handle tensors with any number of dimensions.</p>
+<p>Marks are available at two levels of functionality:</p>
+<ol style="list-style-type: decimal">
+<li><p>(7.5%) Tensors which are able to read and write values at any index, but cannot be resized once created.</p></li>
+<li><p>(7.5%) Tensors which also correctly implement <code>Tensor::resize</code>.</p></li>
+</ol>
+<p>You can use any parts of <code>MatrixTensor</code> as a starting point.</p>
+<h3 id="t2.3-complete-the-factory-function-create_tensor-5">T2.3 : Complete the factory function <code>create_tensor</code> (5%)</h3>
+<p>Complete the factory function <code>create_tensor</code> so that it is able to create tensors of any dimensions. It should automatically choose the most specialised implementation (matrix, order-3, or order-n) based on the dimensions it is given.</p>
+<p><em>Note: this is assessed independently of whether the returned class</em> <em>is fully working or not, as long as it returns a class of</em> <em>the right type.</em></p>
+<h3 id="t2.4-create-a-test-for-order-n-tensors-10">T2.4 : Create a test for order-n tensors (10%)</h3>
+<p>Create a test-bench <code>test_create_tensors.cpp</code> which tests tensor implementations from order 2 to order 5.</p>
+<p>For each tensor order <code>i</code> from 2 to 5 (inclusive), the test-bench should:</p>
+<ol style="list-style-type: decimal">
+<li><p>Instantiate a tensor of order <code>n</code> with length 2 in each of the first <code>n</code> dimensions using <code>create_tensor</code>.</p></li>
+<li><p>Set every element of the tensor to a unique non-zero value using <code>Tensor::write</code>. No element in the tensor should receive the same value.</p></li>
+<li><p>Check every element of the tensor has the same unique non-zero value using <code>Tensor::read</code>.</p></li>
+<li><p>Print <code>Pass i</code> followed by a new-line to stdout, where i is the order of the tensor tested.</p></li>
+</ol>
+<p>If all orders 2 through 5 succeed, then the program should print <code>Success</code> and return the success code.</p>
+<p>For example, if only the matrix implementation works, then the output would be:</p>
+<pre><code>$ ./build_test_create_tensors.sh
+$ ./test_create_tensors
+Pass 2
+$</code></pre>
+<p>While if all the implementations work the output would be:</p>
+<pre><code>$ ./test_create_tensors
+Pass 2
+Pass 3
+Pass 4
+Pass 5
+Success</code></pre>
+<p><em>Hint: you may find <code>first_index</code> and <code>next_index</code> useful.</em> <em>Hint: you may find <code>index_to_offset</code> useful.</em></p>
+<p>You do not need to test the functionality of resize.</p>
+<p>Your test should not rely on any implementation details of the classes, and should work even if it is compiled against a different tensor implementation.</p>
+<p>The test-bench can abort or crash in any way if the tensor implementation does not work, but should only print <code>Pass i</code> if the implementation passed for the given order <code>i</code>.</p>
+<h2 id="t3-tensor-arithmetic-35">T3 : Tensor arithmetic (35%)</h2>
+<h3 id="t3.1-tensor-addition-15">T3.1 : Tensor addition (15%)</h3>
+<p>Complete the implementation of <code>add</code>. Two levels of functionality are recognised:</p>
+<ol style="list-style-type: decimal">
+<li><p>(7.5%) Non-broadcast: the ability to add tensors of the same dimensions.</p></li>
+<li><p>(7.5%) Broadcast: the ability to add tensors while broadcasting any dimensions as necessary.</p></li>
+</ol>
+<p><em>Hint: given a set of dimensions, the functions <code>first_index</code>+<code>next_index</code> can be used to</em> <em>iterate over every index within those dimensions.</em></p>
+<h3 id="t3.2-tensor-multiplication-20">T3.2 : Tensor multiplication (20%)</h3>
+<p>Complete the implementation of <code>multiply</code>.</p>
+<p>You are only required to support the case where the left matrix has greater or equal order than the right matrix.</p>
+<p>Two levels of functionality are recognised:</p>
+<ol style="list-style-type: decimal">
+<li><p>(10%) Order-2 : Order-2 tensors (matrices) can be multiplied with order-2</p></li>
+<li><p>(10%) Order-3 : Order-3 tensors can be multiplied with order-3 and order-2</p></li>
+</ol>
+<p>You are not required to support left-hand side tensors of order less than 2 or greater than 3.</p>
+<p><em>Hint: try to implement lower-orders before higher-orders.</em></p>
+<p><em>Hint: you may wish to write multiple functions, and dispatch to them based on the order.</em></p>
