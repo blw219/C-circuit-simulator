@@ -14,6 +14,9 @@ class component
     int identifier;
     string nodep;
     string nodem;
+    #if type == 'Q'
+        string nodey;
+    #endif
     double value;
 };
 
