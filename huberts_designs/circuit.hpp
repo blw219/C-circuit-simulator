@@ -11,7 +11,7 @@ class component
 {
     public:
     char type;
-    string name;
+    int identifier;
     string nodep;
     string nodem;
     double value;
@@ -73,7 +73,7 @@ class circuit
             vector<component> a = this->find_components(nodes[i]);
             double tmp = 0;
             for(int j=0; j<a.size(); j++){
-                if(a[j].type == 'i'){
+                if(a[j].type == 'I'){
                     if(a[j].nodep == nodes[i]){
                         tmp = tmp + a[j].value;
                     }
@@ -93,7 +93,7 @@ class circuit
             vector<component> a = this->find_components(nodes[i]);
             double tmp = 0;
             for(int j=0; j<a.size(); j++){
-                if(a[j].type == 'r'){
+                if(a[j].type == 'R'){
                     tmp = tmp + 1/a[j].value;
                 }
             }
@@ -108,7 +108,7 @@ class circuit
                 vector<component> x = this->find_components_between(nodes[i],nodes[j]);
                 double tmp = 0;
                 for(int k=0; k<x.size(); k++){
-                    if(x[k].type == 'r'){
+                    if(x[k].type == 'R'){
                         tmp = tmp - 1/x[k].value;
                     }
                 }
@@ -125,6 +125,6 @@ class circuit
 };
 
 istream &operator>>(istream &src, component &in){
-    src >>in.type>>in.name>>in.nodep>>in.nodem>>in.value;
+    src >>in.type>>in.identifier>>in.nodep>>in.nodem>>in.value;
     return src;
 }

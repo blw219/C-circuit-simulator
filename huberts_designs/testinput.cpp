@@ -1,7 +1,7 @@
 #include "circuit.hpp"
 
 void print(component &R1){
-    cout<<R1.type<<R1.name;//<<" "<<R1.nodep<<" "<<R1.nodem<<" "<<R1.value<<endl;
+    cout<<R1.type<<R1.identifier;//<<" "<<R1.nodep<<" "<<R1.nodem<<" "<<R1.value<<endl;
 }
 
 int main()

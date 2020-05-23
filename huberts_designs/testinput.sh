@@ -2,6 +2,6 @@
 
     g++ testinput.cpp -o testinput;
     g++ testprogram.cpp -o ref
-    ./testinput < testinput.txt > out.txt;
+    ./testinput < testSPICE.txt > outSPICE.txt;
     ./ref > ref.txt;
-    diff ref.txt out.txt && echo "Success";
+    diff ref.txt outSPICE.txt && echo "Success";
