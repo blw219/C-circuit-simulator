@@ -11,6 +11,7 @@ class component
 {
     public:
     char type;
+    string name;
     string nodep;
     string nodem;
     double value;
@@ -122,3 +123,8 @@ class circuit
         cout << "The voltage vector is: " << endl << voltage_vector << endl;
     }
 };
+
+istream &operator>>(istream &src, component &in){
+    src >>in.type>>in.name>>in.nodep>>in.nodem>>in.value;
+    return src;
+}

@@ -1,16 +1,13 @@
 #include "circuit.hpp"
 
+void print(component &R1){
+    cout<<R1.type<<R1.name;//<<" "<<R1.nodep<<" "<<R1.nodem<<" "<<R1.value<<endl;
+}
+
 int main()
 {
-    component R1 = {'r', "R1", "V1", "V2", 3};
-    component R2 = {'r', "R2", "V1", "0", 4};
-    component R3 = {'r', "R3", "V1", "V3", 6};
-    component R4 = {'r', "R4", "V2", "0", 6};
-    component R5 = {'r', "R5", "V2", "V3", 5};
-    component R6 = {'r', "R6", "V3", "0", 8};
-    component I1 = {'i', "I1", "V1", "0", 6};
-    component I2 = {'i', "I2", "V3", "V1", 4};
-
+    component R1, R2, R3, R4, R5, R6, I1, I2;
+    cin>>R1>>R2>>R3>>R4>>R5>>R6>>I1>>I2;
     circuit a;
     a.comps.push_back(R1);
     a.comps.push_back(R2);
