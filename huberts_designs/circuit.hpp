@@ -129,5 +129,8 @@ class circuit
 
 istream &operator>>(istream &src, component &in){
     src >>in.type>>in.identifier>>in.nodep>>in.nodem>>in.value;
+    if(src.fail()){
+        cout << "Please input the correct node format" << endl;
+    } 
     return src;
 }
