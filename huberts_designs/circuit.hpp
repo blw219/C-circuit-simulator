@@ -201,8 +201,10 @@ class circuit
                 int pos = stoi(nod)-1;
 
                 conductance_matrix(pos,pos) = 1;
-                for(int j=1; j<conductance_matrix.cols(); j++){
-                    conductance_matrix(0,j) = 0;
+                for(int j=0; j<conductance_matrix.cols(); j++){
+                    if(conductance_matrix(pos,j) != 1){
+                        conductance_matrix(pos,j) = 0;
+                    }
                 }
                 break;
             }
