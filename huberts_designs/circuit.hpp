@@ -17,11 +17,11 @@ class component
     int identifier;
     string nodep;
     string nodem;
-    #if type == 'Q'
-        string nodey;
-    #endif
+    string nodey;
     double value;
+    string model;
 };
+ 
 
 class circuit
 {
@@ -47,5 +47,7 @@ class circuit
 };
 
 istream &operator>>(istream &src, component &in);
+ostream &operator<<(ostream &res, component &out);
+
 
 #endif

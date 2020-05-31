@@ -305,12 +305,68 @@ void circuit::op_simulate_supernode(){
     
 istream &operator>>(istream &src, component &in){
     src>>in.type;
-    if(in.type == 'V' || in.type == 'I' || in.type == 'R' || in.type == 'C' || in.type == 'L' || in.type == 'D'){
-         src>>in.identifier>>in.nodep>>in.nodem>>in.value;
+    if(in.type == 'V' || in.type == 'I' || in.type == 'R' || in.type == 'C' || in.type == 'L'){
+         double value;
+         char y[3];
+         src>>in.identifier>>in.nodep>>in.nodem>>value;
+         in.model = "N/A";
+         in.nodey = "N/A";
+         //if there is no multiplier, check ASCII, 10 = LINE FEED
+         if(cin.peek()==10||cin.peek()==32 || cin.peek()==-1){
+            in.value=value;
+         }else if(cin.peek()==112){//p
+            cin.get(y,2);
+            in.value=(value/pow(10,12));
+         }else if(cin.peek()==110){//n
+            cin.get(y,2);
+            in.value=(value/pow(10,9));
+         }else if(cin.peek()==117){//u
+            cin.get(y,2);
+            in.value=(value/pow(10,6));
+         }else if(cin.peek()==109){//m
+            cin.get(y,2);
+            in.value=(value/pow(10,3));
+         }else if(cin.peek()==107){//k
+            cin.get(y,2);
+            in.value=(value*pow(10,3));
+         }else if(cin.peek()==177){//M
+            in.value=(value*pow(10,6));
+            cin.get(y,4);
+            if(y[1] != 'e' || y[2] != 'g'){
+                cout << "We assumed you meant Meg, please check input value's multiplier" << endl;
+            }
+         }else if(cin.peek()==71){//G
+            cin.get(y,2);
+            in.value=(value*pow(10,9));
+         }else{
+            in.value= double(NAN);
+            cerr << "unknown mutiplier";
+         }
+    }else if(in.type == 'D'){
+         src>>in.identifier>>in.nodep>>in.nodem>>in.model;
+         in.nodey = "N/A";
+         in.value = double(NAN);
     }else if(in.type == 'Q'){
-        //src>>in.identifier>>in.nodep>>in.nodem>>in.nodey>>in.value;
+         src>>in.identifier>>in.nodep>>in.nodem>>in.nodey>>in.model;
+         in.value = double(NAN);
+         if(in.model!= "NPN" || in.model!= "PNP"){
+            cerr << "Please enter the correct transistor model (NPN or PNP)";
+         }
+         assert (in.model=="NPN"||in.model=="PNP");
     }else{
-        cout << "Please input the correct node format" << endl;
+        cout << "Please input the correct node format(refer to the technical report)" << endl;
     } 
     return src;
+}
+
+ostream &operator<<(ostream &res, component &out){
+    if(out.type == 'V' ||out.type == 'I' ||out.type == 'R' ||out.type == 'C' ||out.type == 'L'){
+        cout<< out.type << out.identifier <<' '<< out.nodep <<' '<< out.nodem <<' '<< out.value << endl;
+    }else if(out.type == 'D'){
+        cout<< out.type << out.identifier <<' '<< out.nodep <<' '<< out.nodem <<' '<< out.model << endl;
+    }else if(out.type == 'Q'){
+        cout<< out.type << out.identifier <<' '<< out.nodep <<' '<< out.nodem <<' '<< out.nodey<<' '<< out.model << endl;
+    }else{
+        cerr << ("output error");
+    }
 }
