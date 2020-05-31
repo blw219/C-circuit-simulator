@@ -1,0 +1,14 @@
+The current vector is: 
+2
+0
+4
+
+The conductance matrix is: 
+     0.75 -0.333333 -0.166667
+-0.333333       0.7      -0.2
+-0.166667      -0.2  0.491667
+
+The voltage vector is: 
+10.1773
+9.22915
+15.3398
