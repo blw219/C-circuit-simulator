@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
     g++ testinput.cpp -o testinput;
     g++ testprogram.cpp -o ref
     ./testinput < testSPICE.txt > outSPICE.txt;

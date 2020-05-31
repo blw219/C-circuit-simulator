@@ -307,10 +307,14 @@ istream &operator>>(istream &src, component &in){
     src>>in.type;
     if(in.type == 'V' || in.type == 'I' || in.type == 'R' || in.type == 'C' || in.type == 'L' || in.type == 'D'){
          src>>in.identifier>>in.nodep>>in.nodem>>in.value;
+         if(src.fail()){
+             cout << "Please input the correct node format" << endl;
+         }
     }else if(in.type == 'Q'){
         //src>>in.identifier>>in.nodep>>in.nodem>>in.nodey>>in.value;
-    }else{
-        cout << "Please input the correct node format" << endl;
-    } 
+        if(src.fail()){
+             cout << "Please input the correct node format" << endl;
+         }
+    }
     return src;
 }
