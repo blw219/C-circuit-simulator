@@ -311,6 +311,9 @@ istream &operator>>(istream &src, component &in){
          src>>in.identifier>>in.nodep>>in.nodem>>value;
          in.model = "N/A";
          in.nodey = "N/A";
+         if(src.fail()){
+             cout << "Please input the correct node format" << endl;
+         }
          //if there is no multiplier, check ASCII, 10 = LINE FEED
          if(cin.peek()==10||cin.peek()==32 || cin.peek()==-1){
             in.value=value;
@@ -344,10 +347,16 @@ istream &operator>>(istream &src, component &in){
          }
     }else if(in.type == 'D'){
          src>>in.identifier>>in.nodep>>in.nodem>>in.model;
+         if(src.fail()){
+             cout << "Please input the correct node format" << endl;
+         }
          in.nodey = "N/A";
          in.value = double(NAN);
     }else if(in.type == 'Q'){
          src>>in.identifier>>in.nodep>>in.nodem>>in.nodey>>in.model;
+         if(src.fail()){
+             cout << "Please input the correct node format" << endl;
+         }
          in.value = double(NAN);
          if(in.model!= "NPN" || in.model!= "PNP"){
             cerr << "Please enter the correct transistor model (NPN or PNP)";
