@@ -37,7 +37,7 @@ vector<component> circuit::find_components_between(string node1, string node2)
         return x;
 }
 
-void circuit::op_simulate(Eigen::MatrixXd conductance_matrix, Eigen::MatrixXd current_vector, Eigen::MatrixXd voltage_vector)
+void circuit::op_simulate(Eigen::MatrixXd &conductance_matrix, Eigen::MatrixXd &current_vector, Eigen::MatrixXd &voltage_vector)
 {
     assert(!comps.empty());
         //check if inductor is present in circuit
@@ -195,42 +195,106 @@ void circuit::op_simulate(Eigen::MatrixXd conductance_matrix, Eigen::MatrixXd cu
                 new_voltage_vector(insert_nodes[i]-1,0) = new_voltage_vector(insert_nodes[i]-2,0);
             }
 
-            cout << "The voltage vector is: " << endl << new_voltage_vector << endl;
+            voltage_vector = new_voltage_vector;
+
+            cout << "The voltage vector is: " << endl << voltage_vector << endl;
 
         }else{
             cout << "The voltage vector is: " << endl << voltage_vector << endl;
-        } 
+        }
+
+        /*ofstream output_file;
+        output_file.open("op_analysis_output.csv");
+
+        output_file << "Node" << "," << "Voltage" << endl;
+
+        for(int i=0; i<voltage_vector.rows(); i++){
+            output_file << "N" << i+1 << "," << voltage_vector(i,0) << endl;
+        }*/
 }
 
 void circuit::trans_simulate(double stoptime, double timestep)
 {
     assert(!comps.empty());
 
+    const double pi = 3.141592654;
+    circuit a = *this;
+
     double capacitor_current = 0;
     double inductor_voltage = 0;
 
-    //op_simulate(); //include open circuit for capacitors and short circuit for inductors
     //store value of initial simulation in matrixes
+    Eigen::MatrixXd conductance_matrix;
+    Eigen::MatrixXd current_vector;
+    Eigen::MatrixXd voltage_vector;
+    a.op_simulate(conductance_matrix, current_vector, voltage_vector);
 
     int counts = stoptime/timestep;
+    //finding the frequency and amplitude
+    double frequency = 0;
+    double amplitude = 0;
+    for(int i=0; i<comps.size(); i++){
+        if(comps[i].type == 'v' && comps[i].input_function == "AC"){
+            frequency = comps[i].frequency;
+            amplitude = comps[i].amplitude;
+            break;
+        }
+    }
+
+    //create output file
+    ofstream out;
+    out.open("transient_output.csv");
+    out << "Time(s)";
+    vector<string> nodes = this->find_nodes();
+    for(int i=1; i<nodes.size(); i++){
+        out << "," << "N" << i;
+    }
+    out << endl;
+
     for(int i=0; i<=counts; i++){
         //find current through every capacitor
-        for(int j=0; j<=comps.size(); j++){
-            if(comps[j].type == 'c'){
-                //capacitor_current = voltage at (nodep - nodem) / (1/(2*pi*frequency))
-                comps[j].type = 'v';
-                //comps[j].value = capacitor_current*timestep/capacitance
-            }
+        a = *this;
+        for(int j=0; j<=a.comps.size(); j++){
+            /*if(a.comps[j].type == 'c'){
+                //capacitor_current = voltage at (nodep - nodem) / (1/(2*pi*capacitance*frequency))
+                string tmp_nodep = a.comps[j].nodep;
+                string tmp_nodem = a.comps[j].nodem;
+                tmp_nodep.erase(tmp_nodep.begin());
+                //tmp_nodem.erase(tmp_nodem.begin());
+                int pos_p = stoi(tmp_nodep)-1;
+                int pos_m = stoi(tmp_nodem);
 
-            if(comps[j].type == 'l'){
+                double capacitance = a.comps[j].value;
+                capacitor_current +=  (voltage_vector(pos_p,0))/(1/2*pi*capacitance*frequency);
+                a.comps[j].type = 'v';
+                a.comps[j].value = capacitor_current*timestep/capacitance;
+            }*/
+
+            /*if(comps[j].type == 'l'){
                 //inductor_voltage = current through inductor * 2*pi*inductance
                 comps[j].type = 'i';
                 //comps[j].value = inductor_voltage*timestep/inductance
-            }
-
+            }*/
         }
 
-        //simulate
+        //out << i*timestep << ",";
+        for(int j=0; j<a.comps.size(); j++){
+            if(a.comps[j].type == 'v'){
+                a.comps[j].value = amplitude*sin(i*timestep*frequency*2*pi)+a.comps[j].DC_offset;
+                //out << a.comps[j].value << endl;
+                break;
+            }
+        }
+    
+        //print to csv per row
+        Eigen::MatrixXd x;
+        Eigen::MatrixXd y;
+        Eigen::MatrixXd z;
+        a.op_simulate(x,y,z);
+        out << i*timestep;
+        for(int j=0; j<z.rows(); j++){
+            out << "," << z(j,0);
+        }
+        out << endl;
     }
-
 }

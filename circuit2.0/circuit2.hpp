@@ -6,6 +6,7 @@
 #include <iostream>
 #include <cmath>
 #include <cassert>
+#include <fstream>
 #include "eigen-3.3.7/Eigen/Dense"
 
 using namespace std;
@@ -17,17 +18,10 @@ class component
     string nodep;
     string nodem;
     double value;
-    
-};
-
-class AC_source
-    : public component
-{
-    public: 
     string input_function;
-    float amplitude;
-    float frequency;
-    float DC_offset;
+    double amplitude;
+    double frequency;
+    double DC_offset;
 };
 
 class circuit
@@ -45,7 +39,7 @@ class circuit
     vector<component> find_components_between(string node1, string node2);
 
     //do an operating point simulation/DC simulation of the circuit, then outputs node voltages
-    void op_simulate(Eigen::MatrixXd conductance_matrix, Eigen::MatrixXd current_vector, Eigen::MatrixXd voltage_vector);
+    void op_simulate(Eigen::MatrixXd &conductance_matrix, Eigen::MatrixXd &current_vector, Eigen::MatrixXd &voltage_vector);
 
     //do a transient simulation of the circuit, then outputs node voltages in a .csv format
     void trans_simulate(double stoptime, double timestep);
