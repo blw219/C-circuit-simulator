@@ -39,6 +39,7 @@ class circuit
     vector<component> find_components_between(string node1, string node2);
 
     //do an operating point simulation/DC simulation of the circuit, then outputs node voltages
+    void op_simulate();
     void op_simulate(Eigen::MatrixXd &conductance_matrix, Eigen::MatrixXd &current_vector, Eigen::MatrixXd &voltage_vector);
 
     //do a transient simulation of the circuit, then outputs node voltages in a .csv format
