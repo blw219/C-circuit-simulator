@@ -1,4 +1,0 @@
-The voltage vector is: 
-10.1773
-9.22915
-15.3398
