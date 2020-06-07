@@ -118,7 +118,7 @@ void circuit::op_simulate_w_voltage()
             vector<component> a = this->find_components(nodes[i]);
             double tmp = 0;
             for(int j=0; j<a.size(); j++){
-                if(a[j].type == 'i'){
+                if(a[j].type == 'I'){
                     if(a[j].nodep == nodes[i]){
                         tmp = tmp + a[j].value;
                     }
@@ -126,7 +126,7 @@ void circuit::op_simulate_w_voltage()
                         tmp = tmp - a[j].value;
                     }
                 }
-                if(a[j].type == 'v'){
+                if(a[j].type == 'V'){
                     if(a[j].nodem == "0"){
                         tmp = tmp + a[j].value;
                         conductance_matrix(0,0) = 1;
@@ -145,7 +145,7 @@ void circuit::op_simulate_w_voltage()
 
             //Finding Gii
             for(int j=0; j<a.size(); j++){
-                if(a[j].type == 'r'){
+                if(a[j].type == 'R'){
                     tmp = tmp + 1/a[j].value;
                 }
             }
@@ -160,7 +160,7 @@ void circuit::op_simulate_w_voltage()
                 vector<component> x = this->find_components_between(nodes[i],nodes[j]);
                 double tmp = 0;
                 for(int k=0; k<x.size(); k++){
-                    if(x[k].type == 'r'){
+                    if(x[k].type == 'R'){
                         tmp = tmp - 1/x[k].value;
                     }
                 }
@@ -171,7 +171,7 @@ void circuit::op_simulate_w_voltage()
         }
 
         for(int i=0; i<this->comps.size(); i++){
-            if(this->comps[i].type == 'v' && this->comps[i].nodem == "0"){
+            if(this->comps[i].type == 'V' && this->comps[i].nodem == "0"){
                 string nod = this->comps[i].nodep;
                 nod.erase(nod.begin());
                 int pos = stoi(nod)-1;
