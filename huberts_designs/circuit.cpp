@@ -332,7 +332,7 @@ istream &operator>>(istream &src, component &in){
          }else if(cin.peek()==107){//k
             cin.get(y,2);
             in.value=(value*pow(10,3));
-         }else if(cin.peek()==177){//M
+         }else if(cin.peek()==77){//M
             in.value=(value*pow(10,6));
             cin.get(y,4);
             if(y[1] != 'e' || y[2] != 'g'){
