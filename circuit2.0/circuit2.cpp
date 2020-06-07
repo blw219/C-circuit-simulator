@@ -392,6 +392,7 @@ void circuit::trans_simulate(double stoptime, double timestep)
     Eigen::MatrixXd voltage_vector;
     a.op_simulate(conductance_matrix, current_vector, voltage_vector);
 
+    //finding 'Thevenin Resistance'
     double resistance;
     for(int i=0; i<a.comps.size(); i++){
         if(a.comps[i].type == 'r'){
@@ -426,7 +427,7 @@ void circuit::trans_simulate(double stoptime, double timestep)
         //find current through every capacitor
         a = *this;
         for(int j=0; j<=a.comps.size(); j++){
-            if(a.comps[j].type =='c' && i>=1){
+            if(a.comps[j].type =='c'){
                 string tmp_nodep = a.comps[j].nodep;
                 //cerr << tmp_nodep << endl;
                 int pos_p;
@@ -449,7 +450,7 @@ void circuit::trans_simulate(double stoptime, double timestep)
 
                 double capacitance = a.comps[j].value;
                 a.comps[j].type = 'v';
-                cout << voltage_vector(pos_p,0) << endl << endl;
+                //cout << voltage_vector(pos_p,0) << endl << endl;
                 double capacitor_current = (voltage_vector(0,0)-voltage_vector(pos_p,0))/resistance; //might need to be modified in the future
                 //cout << capacitor_current << endl;
                 capacitor_voltage += capacitor_current*timestep/capacitance;
@@ -457,11 +458,41 @@ void circuit::trans_simulate(double stoptime, double timestep)
                 //cout << capacitor_voltage << endl << endl;
             }
 
-            /*if(comps[j].type == 'l'){
-                //inductor_voltage = current through inductor * 2*pi*inductance
-                comps[j].type = 'i';
+            if(comps[j].type == 'l'){
+                //inductor_voltage = voltage between inductor
                 //comps[j].value = inductor_voltage*timestep/inductance
-            }*/
+                string tmp_nodep = a.comps[j].nodep;
+                //cerr << tmp_nodep << endl;
+                int pos_p;
+                double v_plus;
+                if(tmp_nodep == "0"){
+                    pos_p = 0;
+                    v_plus = 0;
+                }else{
+                    tmp_nodep.erase(tmp_nodep.begin());
+                    pos_p = stoi(tmp_nodep)-1; 
+                    v_plus = voltage_vector(pos_p,0);
+                }
+
+                string tmp_nodem = a.comps[j].nodem;
+                //cerr << tmp_nodem << endl;
+                int pos_m;
+                double v_min;
+                if(tmp_nodem == "0"){
+                    pos_m = 0;
+                    v_min = 0;
+                }else{
+                    tmp_nodem.erase(tmp_nodem.begin());
+                    pos_m = stoi(tmp_nodep)-1;
+                    v_min = voltage_vector(pos_m,0);
+                }
+
+                double inductance = a.comps[j].value;
+                a.comps[j].type = 'i';
+                double inductor_voltage = (v_plus-v_min)/resistance; 
+                inductor_current += inductor_voltage*timestep/inductance;
+                a.comps[j].value = inductor_current;
+            }
         }
 
         for(int j=0; j<a.comps.size(); j++){
