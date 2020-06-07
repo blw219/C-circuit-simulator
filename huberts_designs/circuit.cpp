@@ -207,7 +207,7 @@ void circuit::op_simulate_supernode(){
             vector<component> a = this->find_components(nodes[i]);
             double tmp = 0;
             for(int j=0; j<a.size(); j++){
-                if(a[j].type == 'i'){
+                if(a[j].type == 'I'){
                     if(a[j].nodep == nodes[i]){
                         tmp = tmp + a[j].value;
                     }
@@ -219,7 +219,7 @@ void circuit::op_simulate_supernode(){
             current_vector(i-1,0) = tmp;
 
             for(int j=0; j<a.size(); j++){
-                if(a[j].type == 'v' && current_vector(i-1,0) == 0){
+                if(a[j].type == 'V' && current_vector(i-1,0) == 0){
                     double temp = a[j].value;
                     current_vector(i-1,0) = temp;
                 }
@@ -235,7 +235,7 @@ void circuit::op_simulate_supernode(){
 
             //Finding Gii
             for(int j=0; j<a.size(); j++){
-                if(a[j].type == 'r'){
+                if(a[j].type == 'R'){
                     tmp = tmp + 1/a[j].value;
                 }
             }
@@ -250,7 +250,7 @@ void circuit::op_simulate_supernode(){
                 vector<component> x = this->find_components_between(nodes[i],nodes[j]);
                 double tmp = 0;
                 for(int k=0; k<x.size(); k++){
-                    if(x[k].type == 'r'){
+                    if(x[k].type == 'R'){
                         tmp = tmp - 1/x[k].value;
                     }
                 }
@@ -262,7 +262,7 @@ void circuit::op_simulate_supernode(){
 
         for(int i=0; i<this->comps.size(); i++){
             //if voltage source is connected to GND
-            if(this->comps[i].type == 'v' && this->comps[i].nodem == "0"){
+            if(this->comps[i].type == 'V' && this->comps[i].nodem == "0"){
                 string nod = this->comps[i].nodep;
                 nod.erase(nod.begin());
                 int pos = stoi(nod)-1;
@@ -276,7 +276,7 @@ void circuit::op_simulate_supernode(){
             }
 
             //if there is a supernode
-            if(this->comps[i].type == 'v' && this->comps[i].nodem != "0"){
+            if(this->comps[i].type == 'V' && this->comps[i].nodem != "0"){
                 string nod_plus = this->comps[i].nodep;
                 nod_plus.erase(nod_plus.begin());
                 int pos_plus = stoi(nod_plus)-1;
