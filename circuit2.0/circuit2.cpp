@@ -67,7 +67,7 @@ void circuit::simple_op_simulate(Eigen::MatrixXd &conductance_matrix, Eigen::Mat
             }
             current_vector(i-1,0) = tmp;
         }
-        cerr << "The current vector is: " << endl << current_vector << endl << endl;
+        //cerr << "The current vector is: " << endl << current_vector << endl << endl;
         //cerr << conductance_matrix << endl;
 
         //Finding the conductance matrix
@@ -117,11 +117,11 @@ void circuit::simple_op_simulate(Eigen::MatrixXd &conductance_matrix, Eigen::Mat
                 break;
             }
         }
-        cerr << "The conductance matrix is: " << endl << conductance_matrix << endl << endl;
+        //cerr << "The conductance matrix is: " << endl << conductance_matrix << endl << endl;
 
         //Calculate the voltage vector
         voltage_vector = conductance_matrix.inverse() * current_vector;
-        cout << "The voltage vector is: " << endl << voltage_vector << endl;
+        //cout << "The voltage vector is: " << endl << voltage_vector << endl;
 }
 
 void circuit::op_simulate()
@@ -595,7 +595,7 @@ void circuit::trans_simulate(double stoptime, double timestep)
                     v_plus = 0;
                 }else{
                     tmp_nodep.erase(tmp_nodep.begin());
-                    pos_p = stoi(tmp_nodep)-2; 
+                    pos_p = stoi(tmp_nodep)-1; 
                     v_plus = voltage_vector(pos_p,0);
                 }
 
@@ -614,8 +614,16 @@ void circuit::trans_simulate(double stoptime, double timestep)
 
                 double inductance = a.comps[j].value;
                 a.comps[j].type = 'i';
-                double inductor_voltage = (v_plus-0)/resistance; 
-                inductor_current -= inductor_voltage*timestep/inductance;
+                double inductor_voltage;
+                //cerr << v_plus << endl;
+                if(inductor_current < -10/resistance){
+                    inductor_current = -10/resistance;
+                }else{
+                    inductor_voltage = v_plus-0;
+                    inductor_current -= inductor_voltage*timestep/(resistance*inductance);
+                }
+
+                cerr << inductor_current << endl;
                 a.comps[j].value = inductor_current;
             }
         }
