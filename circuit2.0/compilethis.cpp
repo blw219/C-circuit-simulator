@@ -97,12 +97,12 @@ int main()
         }
 
         if(lines[i] == ".op"){
-            cout << "Conducting operating point analysis..." << endl;
+            cout << "Operating point analysis selected..." << endl;
             op_analysis = true;
         }
 
         if(lines[i][0] == '.' && lines[i][1] == 't'){
-            cout << "Conducting transient analysis..." << endl;
+            cout << "Transient analysis selected..." << endl;
             transient_analysis = true;
             vector<string> trans = breakdown(lines[i]);
             stop_time = stod(trans[2]);
@@ -151,15 +151,29 @@ int main()
             }
 
             //finding values
-            tmp.value = suffix_converter(words[3]);
-
+            if(words[3][0] == 'S'){
+                string str = words[3];
+                str.erase(0,5);
+                double offset = stod(str);
+                string strr = words[5];
+                strr.erase(strr.end());
+                tmp.DC_offset = offset;
+                tmp.amplitude = stod(words[4]);
+                tmp.frequency = stod(strr);
+                tmp.input_function = "AC";
+            }else{
+                tmp.value = suffix_converter(words[3]);
+            }
             circ.push_back(tmp);
         }
     }
 
+    cout << "The circuit consists of these components: " << endl;
     for(int i=0; i<circ.size(); i++){
         cout << circ[i].type << " " << circ[i].nodep << " " << circ[i].nodem << " " << circ[i].value << endl; 
     }
+
+    cout << "End of circuit." << endl;
 
     circuit final;
     final.comps = circ;
