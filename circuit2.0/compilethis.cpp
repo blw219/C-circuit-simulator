@@ -2,7 +2,40 @@
 
 using namespace std;
 
-double suffix_converter(string x);
+double suffix_converter(string x)
+{
+    string number = x;
+    double multiplier = 1;
+    for(int i=0; i<x.length(); i++){
+        if(x[i] == 'p' || x[i] == 'n' || x[i] == 'u' || x[i] == 'm' || x[i] == 'k' || x[i] == 'M' || x[i] == 'G'){
+            number = x.substr(0,i);
+        }
+        if(x[i] == 'p'){
+            multiplier = 1e-12;
+        }
+        if(x[i] == 'n'){
+            multiplier = 1e-9;
+        }
+        if(x[i] == 'u'){
+            multiplier = 1e-6;
+        }
+        if(x[i] == 'm'){
+            multiplier = 1e-3;
+        }
+        if(x[i] == 'k'){
+            multiplier = 1e3;
+        }
+        if(x[i] == 'M'){
+            multiplier = 1e6;
+        }
+        if(x[i] == 'G'){
+            multiplier = 1e9;
+        }
+    }
+    double no = stod(number);
+    double final = no * multiplier;
+    return final;
+}
 
 string getstring(char x)
 {
@@ -100,19 +133,25 @@ int main()
 
             //finding the nodes
             if(words[1][0] == 'N'){
-                tmp.nodep = "V" + getstring(words[1][3]);
+                string str = words[1];
+                str.erase(str.begin());
+                int ind = stoi(str);
+                tmp.nodep = "V" + to_string(ind);
             }else{
                 tmp.nodep = "0";
             }
 
             if(words[2][0] == 'N'){
-                tmp.nodem = "V" + getstring(words[2][3]);
+                string str = words[2];
+                str.erase(str.begin());
+                int ind = stoi(str);
+                tmp.nodem = "V" + to_string(ind);
             }else{
                 tmp.nodem = "0";
             }
 
             //finding values
-            tmp.value = stod(words[3]);
+            tmp.value = suffix_converter(words[3]);
 
             circ.push_back(tmp);
         }
