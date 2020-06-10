@@ -38,6 +38,15 @@ class circuit
     //finds components in between two nodes
     vector<component> find_components_between(string node1, string node2);
 
+    //returns the Thevenin voltage between a component in the circuit
+    double find_thevenin_voltage(component x);
+
+    //returns the Thevenin resistance between a component in the circuit
+    double find_thevenin_resistance(component x);
+
+    //do an operating point simulation for circuits without capacitors or inductors
+    void simple_op_simulate(Eigen::MatrixXd &conductance_matrix, Eigen::MatrixXd &current_vector, Eigen::MatrixXd &voltage_vector);
+
     //do an operating point simulation/DC simulation of the circuit, then outputs node voltages
     void op_simulate();
     void op_simulate(Eigen::MatrixXd &conductance_matrix, Eigen::MatrixXd &current_vector, Eigen::MatrixXd &voltage_vector);
