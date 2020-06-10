@@ -7,4 +7,4 @@ set -e
 
     ./testinput < ./test_files/testSPICE1.txt > ./test_files/outSPICE1.txt &>> ./test_files/outSPICE1.txt &>> ./test_files/outSPICE1.txt;
     ./ref > ./test_files/ref.txt &>> ./test_files/ref.txt &>> ./test_files/ref.txt;
-    diff ref.txt outSPICE1.txt && echo "Success";
+    diff ./test_files/ref.txt ./test_files/outSPICE1.txt && echo "Success";
