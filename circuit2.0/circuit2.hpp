@@ -22,6 +22,9 @@ class component
     double amplitude;
     double frequency;
     double DC_offset;
+    int identifier;
+    string nodey;
+    string model;
 };
 
 class circuit
@@ -54,5 +57,7 @@ class circuit
     //do a transient simulation of the circuit, then outputs node voltages in a .csv format
     void trans_simulate(double stoptime, double timestep);
 };
+
+istream &operator>>(istream &src, component &in);
 
 #endif

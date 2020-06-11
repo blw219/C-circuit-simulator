@@ -124,6 +124,39 @@ void circuit::simple_op_simulate(Eigen::MatrixXd &conductance_matrix, Eigen::Mat
         //cout << "The voltage vector is: " << endl << voltage_vector << endl;
 }
 
+double circuit::find_thevenin_voltage(component x)
+{
+    string nplus = x.nodep;
+    string nmin = x.nodem;
+    int p;
+    int m;
+
+    if(nplus == "0"){
+        p = 0;
+    }else{
+        nplus.erase(nplus.begin());
+        p = stoi(nplus) - 1;
+    }
+
+    if(nmin == "0"){
+        m = 0;
+    }else{
+        nmin.erase(nmin.begin());
+        m = stoi(nmin) - 1;
+    }
+
+    Eigen::MatrixXd conductance_matrix;
+    Eigen::MatrixXd current_vector;
+    Eigen::MatrixXd voltage_vector;
+    this->simple_op_simulate(conductance_matrix, current_vector, voltage_vector);
+    
+    if(m == 0){
+        return voltage_vector(p,0);
+    }else{
+        return voltage_vector(p,0) - voltage_vector(m,0);
+    }
+}
+
 void circuit::op_simulate()
 {
     assert(!comps.empty());
@@ -526,6 +559,14 @@ void circuit::trans_simulate(double stoptime, double timestep)
         }
     }
 
+    double thev_volt;
+    for(int i=0; i<a.comps.size(); i++){
+        if(a.comps[i].type == 'v'){
+            thev_volt = a.comps[i].value;
+            break;
+        }
+    }
+
     int counts = stoptime/timestep;
     //finding the frequency and amplitude
     double frequency = 0;
@@ -570,13 +611,13 @@ void circuit::trans_simulate(double stoptime, double timestep)
                     pos_m = 0;
                 }else{
                     tmp_nodem.erase(tmp_nodem.begin());
-                    pos_m = stoi(tmp_nodep)-1;
+                    pos_m = stoi(tmp_nodem)-1;
                 }
 
                 double capacitance = a.comps[j].value;
                 a.comps[j].type = 'v';
                 //cout << voltage_vector(pos_p,0) << endl << endl;
-                double capacitor_current = (voltage_vector(0,0)-voltage_vector(pos_p,0))/resistance; //might need to be modified in the future
+                double capacitor_current = (thev_volt-voltage_vector(pos_p,0))/resistance; //might need to be modified in the future
                 //cout << capacitor_current << endl;
                 capacitor_voltage += capacitor_current*timestep/capacitance;
                 a.comps[j].value = capacitor_voltage;
@@ -616,8 +657,8 @@ void circuit::trans_simulate(double stoptime, double timestep)
                 a.comps[j].type = 'i';
                 double inductor_voltage;
                 //cerr << v_plus << endl;
-                if(inductor_current < -10/resistance){
-                    inductor_current = -10/resistance;
+                if(inductor_current < -thev_volt/resistance){
+                    inductor_current = -thev_volt/resistance;
                 }else{
                     inductor_voltage = v_plus-0;
                     inductor_current -= inductor_voltage*timestep/(resistance*inductance);
@@ -644,4 +685,69 @@ void circuit::trans_simulate(double stoptime, double timestep)
         out << endl;   
     }
     cerr << "Transient Analysis Completed" << endl;
+}
+
+istream &operator>>(istream &src, component &in){
+    src>>in.type;
+    if(in.type == 'V' || in.type == 'I' || in.type == 'R' || in.type == 'C' || in.type == 'L'){
+         double value;
+         char y[3];
+         src>>in.identifier>>in.nodep>>in.nodem>>value;
+         in.model = "N/A";
+         in.nodey = "N/A";
+         if(src.fail()){
+             cout << "Please input the correct node format" << endl;
+         }
+         //if there is no multiplier, check ASCII, 10 = LINE FEED
+         if(cin.peek()==10||cin.peek()==32 || cin.peek()==-1){
+            in.value=value;
+         }else if(cin.peek()==112){//p
+            cin.get(y,2);
+            in.value=(value/pow(10,12));
+         }else if(cin.peek()==110){//n
+            cin.get(y,2);
+            in.value=(value/pow(10,9));
+         }else if(cin.peek()==117){//u
+            cin.get(y,2);
+            in.value=(value/pow(10,6));
+         }else if(cin.peek()==109){//m
+            cin.get(y,2);
+            in.value=(value/pow(10,3));
+         }else if(cin.peek()==107){//k
+            cin.get(y,2);
+            in.value=(value*pow(10,3));
+         }else if(cin.peek()==177){//M
+            in.value=(value*pow(10,6));
+            cin.get(y,4);
+            if(y[1] != 'e' || y[2] != 'g'){
+                cout << "We assumed you meant Meg, please check input value's multiplier" << endl;
+            }
+         }else if(cin.peek()==71){//G
+            cin.get(y,2);
+            in.value=(value*pow(10,9));
+         }else{
+            in.value= double(NAN);
+            cerr << "unknown mutiplier";
+         }
+    }else if(in.type == 'D'){
+         src>>in.identifier>>in.nodep>>in.nodem>>in.model;
+         if(src.fail()){
+             cout << "Please input the correct node format" << endl;
+         }
+         in.nodey = "N/A";
+         in.value = double(NAN);
+    }else if(in.type == 'Q'){
+         src>>in.identifier>>in.nodep>>in.nodem>>in.nodey>>in.model;
+         if(src.fail()){
+             cout << "Please input the correct node format" << endl;
+         }
+         in.value = double(NAN);
+         if(in.model!= "NPN" || in.model!= "PNP"){
+            cerr << "Please enter the correct transistor model (NPN or PNP)";
+         }
+         assert (in.model=="NPN"||in.model=="PNP");
+    }else{
+        cout << "Please input the correct node format(refer to the technical report)" << endl;
+    } 
+    return src;
 }
