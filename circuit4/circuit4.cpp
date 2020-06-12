@@ -503,19 +503,20 @@ void circuit::trans_simulate(double stoptime, double timestep)
                     v_min = 0;
                 }else{
                     tmp_nodem.erase(tmp_nodem.begin());
-                    pos_m = stoi(tmp_nodep)-1;
+                    pos_m = stoi(tmp_nodem)-1;
                     v_min = voltage_vector(pos_m,0);
                 }
 
                 double inductance = a.comps[j].value;
                 a.comps[j].type = 'i';
                 double inductor_voltage;
-                //cerr << v_plus << endl;
+                //cerr << v_plus << " " << v_min << endl;
                 inductor_voltage = v_plus-v_min;
                 double &inductor_current = ind_currents[ind_it];
                 inductor_current -= inductor_voltage*timestep/inductance;
                 //cerr << inductor_current << endl;
                 a.comps[j].value = inductor_current;
+                ind_it++;
             }
         }
 

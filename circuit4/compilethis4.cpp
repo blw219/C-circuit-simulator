@@ -106,8 +106,11 @@ int main()
             cout << "Transient analysis selected..." << endl;
             transient_analysis = true;
             vector<string> trans = breakdown(lines[i]);
+            //cerr << trans[2] << endl;
             stop_time = stod(trans[2]);
             timestep = stod(trans[4]);
+            cout << "Stop Time: " << stop_time << endl;
+            cout << "Time Step: " << timestep << endl;
         }
 
         if(lines[i][0] == 'R' || lines[i][0] == 'L' || lines[i][0] == 'C' || lines[i][0] == 'V'|| lines[i][0] == 'I'){
@@ -184,7 +187,7 @@ int main()
 
     //conducting analysis
     if(op_analysis){
-        cerr << "Sorry, please do a transient analysis." << endl;
+        cerr << "Sorry, please do a transient analysis; operating point simulations are not supported." << endl;
     }
 
     if(transient_analysis){
