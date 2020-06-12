@@ -44,23 +44,23 @@ string getstring(char x)
 }
 
 vector<string> breakdown(string x)
-{
-    vector<string> a;
-    int begin_pos = 0;
+{   
+    vector<string> words;
+    int begin = 0;
     for(int i=0; i<x.length(); i++){
-        if(x[i] == ' ' || i == x.length()-1){
-            int end_pos = i-1;
-            string tmp;
-            if(begin_pos == 0 && end_pos == 0){
-                tmp = x[0];
-            }else{
-                tmp = x.substr(begin_pos, end_pos);
-            }
-            a.push_back(tmp);
-            begin_pos = i+1;
+        if(x[i] == ' '){
+            int length = i-begin;
+            string tmp = x.substr(begin, length);
+            words.push_back(tmp);
+            begin = i+1;
+        }else if(i == x.length()-1){
+            int length = i-begin+1;
+            string tmp = x.substr(begin, length);
+            words.push_back(tmp);
+            begin = i+1;
         }
     }
-    return a;
+    return words;
 }
 
 int main()
@@ -107,8 +107,8 @@ int main()
             transient_analysis = true;
             vector<string> trans = breakdown(lines[i]);
             //cerr << trans[2] << endl;
-            stop_time = stod(trans[2]);
-            timestep = stod(trans[4]);
+            stop_time = suffix_converter(trans[2]);
+            timestep = suffix_converter(trans[4]);
             cout << "Stop Time: " << stop_time << endl;
             cout << "Time Step: " << timestep << endl;
         }
