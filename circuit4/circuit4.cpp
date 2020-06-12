@@ -445,10 +445,10 @@ void circuit::trans_simulate(double stoptime, double timestep)
     for(int i=0; i<=counts; i++){
         //find voltage of every capacitor
         a = *this;
-        for(int j=0; j<currents.size(); j++){
+        /*for(int j=0; j<currents.size(); j++){
             cerr << currents[j] << endl;
         }
-        cerr << endl;
+        cerr << endl;*/
         int cap_it = 0;
         int ind_it = 0;
         for(int j=0; j<=a.comps.size(); j++){
@@ -464,7 +464,7 @@ void circuit::trans_simulate(double stoptime, double timestep)
                 for(int k=0; k<a.comps.size(); k++){
                     if(a.comps[k].nodem == tmp_nodep){
                         //cerr << a.comps[k].type << endl;
-                        cerr << k << endl;
+                        //cerr << k << endl;
                         capacitor_current = currents[k];
                         //cerr << capacitor_current << endl;
                     }
