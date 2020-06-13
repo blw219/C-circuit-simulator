@@ -187,7 +187,8 @@ int main()
 
     //conducting analysis
     if(op_analysis){
-        cerr << "Sorry, please do a transient analysis; operating point simulations are not supported." << endl;
+        cerr << "Warning: circuits with reactive components may not function well" << endl;
+        final.op_simulate();
     }
 
     if(transient_analysis){
