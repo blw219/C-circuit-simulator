@@ -65,15 +65,26 @@ vector<string> breakdown(string x)
 
 int main()
 {
+    string inputfile;
     ifstream file;
-    file.open("inputnetlist.txt");
-
-    if(!file.is_open()){
+    //Locating input file
+    cout << "Please enter name of input file:" << endl;
+    cin >> inputfile;
+    file.open(inputfile);
+    
+    while(!file.is_open()){
         cout << "Error: Input file does not exist." << endl;
-        exit(1);
-    }else{
-        cout << "Reading from file..." << endl;
+        cout << "Please enter name of input file or enter 'exit' to kill the program" << endl;
+        cin >> inputfile;
+        if(inputfile == "exit"){
+            cout << "Program killed" << endl;
+            exit(1);
+        }else{
+        file.open(inputfile);
+        }
     }
+        cout << "Reading from " << inputfile << " ..." << endl;
+    
 
     vector<string> lines;
     string line;
@@ -193,5 +204,7 @@ int main()
 
     if(transient_analysis){
         final.trans_simulate(stop_time,timestep);
+    }else if(!op_analysis){
+        cerr << "Error: transient analysis directive not deteced." << endl;
     }
 }

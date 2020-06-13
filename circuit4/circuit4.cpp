@@ -165,9 +165,18 @@ void circuit::op_simulate()
                 voltage_vector(i,0) = total_voltage;
             }
         }
-        cout << "The voltage vector is: " << endl << voltage_vector << endl;
 
-        cout << endl << "The currents are: " << endl;
+        //Creating output file
+        ofstream out;
+        ifstream file;
+        file.open("op_output.txt");
+        if(file.is_open()){
+            remove("op_output.txt");
+        }
+        out.open("op_output.txt");
+        out << "The voltage vector is: " << endl << voltage_vector << endl;
+
+        out << endl << "The currents are: " << endl;
         
         //vector<int> inductor_positions;
         vector<double> currents;
@@ -201,17 +210,17 @@ void circuit::op_simulate()
                 }else{
                     current = (voltage_vector(posp,0)-voltage_vector(posm,0))/resistance;
                 }
-                cout << current << endl;
+                out << current << endl;
                 currents.push_back(current);
             }
             if(comps[i].type == 'l'){
                 current = 0;
-                cout << current << endl;
+                out << current << endl;
                 currents.push_back(current);
             }
             if(comps[i].type == 'c'){
                 current = 0;
-                cout << current << endl;
+                out << current << endl;
                 currents.push_back(current);
             }
         }
@@ -659,7 +668,7 @@ void circuit::trans_simulate(double stoptime, double timestep)
 
     //create output file
     ofstream out;
-    out.open("transient_output.csv");
+    out.open("transient_output.txt");
     out << "Time(s)";
     vector<string> nodes = this->find_nodes();
     for(int i=1; i<nodes.size(); i++){
