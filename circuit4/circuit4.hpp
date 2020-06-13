@@ -45,6 +45,8 @@ class circuit
     void op_simulate();
     void op_simulate(Eigen::MatrixXd &conductance_matrix, Eigen::MatrixXd &current_vector, Eigen::MatrixXd &voltage_vector, vector<double> &currents);
 
+    void op_simple(Eigen::MatrixXd &conductance_matrix, Eigen::MatrixXd &current_vector, Eigen::MatrixXd &voltage_vector, vector<double> &currents);
+
     //do a transient simulation of the circuit, then outputs node voltages in a .csv format
     void trans_simulate(double stoptime, double timestep);
 };

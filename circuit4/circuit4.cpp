@@ -43,6 +43,13 @@ void circuit::op_simulate()
         vector<string> nodes = this->find_nodes();
         int rows = nodes.size()-1;
         bool voltage_present = false;
+
+        double total_voltage = 0;
+        for(int i=0; i<comps.size(); i++){
+            if(comps[i].type == 'v'){
+                total_voltage += comps[i].value;
+            }
+        }
         
         Eigen::MatrixXd conductance_matrix;
         Eigen::MatrixXd current_vector;
@@ -152,6 +159,12 @@ void circuit::op_simulate()
 
         //Calculate the voltage vector
         Eigen::MatrixXd voltage_vector = conductance_matrix.inverse() * current_vector;
+        for(int i=0; i<voltage_vector.rows(); i++){
+            double temp = voltage_vector(i,0);
+            if(isnan(temp)){
+                voltage_vector(i,0) = total_voltage;
+            }
+        }
         cout << "The voltage vector is: " << endl << voltage_vector << endl;
 
         cout << endl << "The currents are: " << endl;
@@ -212,14 +225,209 @@ void circuit::op_simulate(Eigen::MatrixXd &conductance_matrix, Eigen::MatrixXd &
         int rows = nodes.size()-1;
         bool voltage_present = false;
         
-        bool is_AC = false;
-        double frequency;
+        double total_voltage = 0;
         for(int i=0; i<comps.size(); i++){
-            if(comps[i].type == 'v' && comps[i].input_function == "AC"){
-                is_AC = true;
-                frequency = comps[i].frequency;
+            if(comps[i].type == 'v'){
+                total_voltage += comps[i].value;
             }
         }
+        current_vector.setZero(rows, 1);
+        conductance_matrix.setZero(rows,rows);
+
+        //Finding the current vector
+        for(int i=1; i<nodes.size(); i++){
+            vector<component> a = this->find_components(nodes[i]);
+            double tmp = 0;
+            for(int j=0; j<a.size(); j++){
+                if(a[j].type == 'i'){
+                    if(a[j].nodep == nodes[i]){
+                        tmp = tmp + a[j].value;
+                    }
+                    if(a[j].nodem == nodes[i]){
+                        tmp = tmp - a[j].value;
+                    }
+                }
+            }
+            current_vector(i-1,0) = tmp;
+
+            for(int j=0; j<a.size(); j++){
+                if(a[j].type == 'v' && current_vector(i-1,0) == 0){
+                    double temp = a[j].value;
+                    current_vector(i-1,0) = temp;
+                    voltage_present = true;
+                }
+            }
+        }
+        //cerr << "The current vector is: " << endl << current_vector << endl << endl;
+
+        //Finding the conductance matrix
+        if(conductance_matrix.rows() == 1 && voltage_present){
+            conductance_matrix(0,0) = 1;
+        }else{
+            for(int i=1; i<nodes.size(); i++){
+                vector<component> a = this->find_components(nodes[i]);
+                double tmp = 0;
+
+                //Finding Gii
+                for(int j=0; j<a.size(); j++){
+                    if(a[j].type == 'r'){
+                        tmp = tmp + 1/a[j].value;
+                    }
+                }
+                conductance_matrix(i-1,i-1) = tmp;
+                
+        
+                //Finding other entries
+                if(conductance_matrix.rows() > 1 && conductance_matrix.cols() > 1){
+                    for(int j=1; j<nodes.size(); j++){
+                        if(i==j){
+                            break;
+                        }
+                        vector<component> x = this->find_components_between(nodes[i],nodes[j]);
+                        double tmp = 0;
+                        for(int k=0; k<x.size(); k++){
+                            if(x[k].type == 'r'){
+                                tmp = tmp - 1/x[k].value;
+                            }
+                        }
+                        
+                        conductance_matrix(j-1, i-1) = tmp;
+                        conductance_matrix(i-1, j-1) = tmp;
+                    }
+                }
+            }
+
+            for(int i=0; i<this->comps.size(); i++){
+                //if voltage source is connected to GND
+                if(this->comps[i].type == 'v' && this->comps[i].nodem == "0"){
+                    string nod = this->comps[i].nodep;
+                    nod.erase(nod.begin());
+                    int pos = stoi(nod)-1;
+
+                    conductance_matrix(pos,pos) = 1;
+                    for(int j=0; j<conductance_matrix.cols(); j++){
+                        if(conductance_matrix(pos,j) != 1){
+                            conductance_matrix(pos,j) = 0;
+                        }
+                    }
+                }
+
+                //if there is a supernode
+                if(this->comps[i].type == 'v' && this->comps[i].nodem != "0"){
+                    string nod_plus = this->comps[i].nodep;
+                    nod_plus.erase(nod_plus.begin());
+                    int pos_plus = stoi(nod_plus)-1;
+
+                    string nod_min = this->comps[i].nodem;
+                    nod_min.erase(nod_min.begin());
+                    int pos_min = stoi(nod_min)-1;
+
+                    conductance_matrix(pos_plus,pos_plus) = 1;
+                    conductance_matrix(pos_plus, pos_min) = -1;
+                    conductance_matrix(pos_min, pos_plus) = 0;
+                    for(int j=0; j<conductance_matrix.cols(); j++){
+                        if(!(conductance_matrix(pos_plus,j) == 1 || conductance_matrix(pos_plus,j) == -1)){
+                            conductance_matrix(pos_plus,j) = 0;
+                        }
+                    }
+                }
+            }
+        }
+        //cerr << "The conductance matrix is: " << endl << conductance_matrix << endl << endl;
+
+        //Calculate the voltage vector
+        voltage_vector = conductance_matrix.inverse() * current_vector;
+        for(int i=0; i<voltage_vector.rows(); i++){
+            double temp = voltage_vector(i,0);
+            if(isnan(temp)){
+                voltage_vector(i,0) = total_voltage;
+            }
+        }
+        //cout << "The voltage vector is: " << endl << voltage_vector << endl;
+
+        //cout << endl << "The currents are: " << endl;
+        
+        //vector<int> inductor_positions;
+        double current;
+        for(int i=0; i<comps.size(); i++){
+            if(comps[i].type == 'r'){
+                double resistance = comps[i].value;
+                string p = comps[i].nodep;
+                int posp;
+                bool pzero = false;
+                if(p == "0"){
+                    pzero = true;
+                }else{
+                    p.erase(p.begin());
+                    posp = stoi(p)-1;
+                }
+                string m = comps[i].nodem;
+                int posm;
+                bool mzero = false;
+                if(m == "0"){
+                    mzero = true;
+                }else{
+                    m.erase(m.begin());
+                    posm = stoi(m)-1;
+                }
+
+                if(pzero){
+                    current = -voltage_vector(posm,0)/resistance;
+                }else if(mzero){
+                    current = voltage_vector(posp,0)/resistance;
+                }else{
+                    current = (voltage_vector(posp,0)-voltage_vector(posm,0))/resistance;
+                }
+                //cout << current << endl;
+                currents.push_back(current);
+            }
+            if(comps[i].type == 'l'){
+                current = 0;
+                //cout << current << endl;
+                currents.push_back(current);
+            }
+            if(comps[i].type == 'c'){
+                current = 0;
+                //cout << current << endl;
+                currents.push_back(current);
+            }
+            if(comps[i].type == 'v'){
+                current = 0;
+                //cout << current << endl;
+                currents.push_back(current);
+            }
+            if(comps[i].type == 'i'){
+                current = comps[i].value;
+                //cout << current << endl;
+                currents.push_back(current);
+            }
+        }
+        for(int i=0; i<comps.size(); i++){
+            if(comps[i].type == 'v'){
+                string p = comps[i].nodep;
+                current = 0;
+                for(int j=0; j<comps.size(); j++){
+                    if(p == comps[j].nodep){
+                        current -= currents[j];
+                    }
+                    if(p == comps[j].nodem){
+                        current += currents[j];
+                    }
+                }
+                //cout << current << endl;
+                currents[i] = current;
+            }
+        }
+}
+
+void circuit::op_simple(Eigen::MatrixXd &conductance_matrix, Eigen::MatrixXd &current_vector, Eigen::MatrixXd &voltage_vector, vector<double> &currents)
+{
+    assert(!comps.empty());
+        currents.clear();
+        vector<string> nodes = this->find_nodes();
+        int rows = nodes.size()-1;
+        bool voltage_present = false;
+        
         current_vector.setZero(rows, 1);
         conductance_matrix.setZero(rows,rows);
 
@@ -548,7 +756,7 @@ void circuit::trans_simulate(double stoptime, double timestep)
         }
     
         //print to csv per row
-        a.op_simulate(conductance_matrix,current_vector,voltage_vector, currents);
+        a.op_simple(conductance_matrix,current_vector,voltage_vector, currents);
         
         out << i*timestep;
         for(int j=0; j<voltage_vector.rows(); j++){
