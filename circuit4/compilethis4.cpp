@@ -193,7 +193,5 @@ int main()
 
     if(transient_analysis){
         final.trans_simulate(stop_time,timestep);
-    }else{
-        cerr << "Error: transient analysis directive not deteced." << endl;
     }
 }

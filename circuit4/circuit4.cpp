@@ -659,7 +659,7 @@ void circuit::trans_simulate(double stoptime, double timestep)
 
     //create output file
     ofstream out;
-    out.open("transient_output.txt");
+    out.open("transient_output.csv");
     out << "Time(s)";
     vector<string> nodes = this->find_nodes();
     for(int i=1; i<nodes.size(); i++){
