@@ -49,6 +49,14 @@ void circuit::op_simulate()
             if(comps[i].type == 'v'){
                 total_voltage += comps[i].value;
             }
+            if(comps[i].type == 'l'){
+                comps[i].type = 'r';
+                comps[i].value = 0;
+            }
+            if(comps[i].type == 'c'){
+                comps[i].type = 'r';
+                comps[i].value = 999999999999;
+            }
         }
         
         Eigen::MatrixXd conductance_matrix;
@@ -174,8 +182,10 @@ void circuit::op_simulate()
             remove("op_output.txt");
         }
         out.open("op_output.txt");
+        cerr << "The voltage vector is: " << endl << voltage_vector << endl;
         out << "The voltage vector is: " << endl << voltage_vector << endl;
 
+        cerr << endl << "The currents are: " << endl;
         out << endl << "The currents are: " << endl;
         
         //vector<int> inductor_positions;
