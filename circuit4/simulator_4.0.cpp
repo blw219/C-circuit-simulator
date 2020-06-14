@@ -198,7 +198,7 @@ int main()
 
     //conducting analysis
     if(op_analysis){
-        cerr << "Warning: circuits with reactive components may not function well" << endl;
+        cerr << "Warning: circuits with capacitors and current sources" << endl;
         final.op_simulate();
     }
 
