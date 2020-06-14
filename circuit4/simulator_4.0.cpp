@@ -128,9 +128,7 @@ int main()
             cout << "Component found: " << lines[i][0] << endl;
             vector<string> words = breakdown(lines[i]);
             component tmp;
-            string idone = getstring(lines[i][0]);
-            string idtwo = getstring(lines[i][1]);
-            tmp.identifier =  idone + idtwo;
+            tmp.identifier =  words[0];
             //finding the type of component
             if(lines[i][0] == 'R'){
                 tmp.type = 'r';
