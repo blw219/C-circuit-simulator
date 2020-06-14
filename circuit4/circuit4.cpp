@@ -182,10 +182,10 @@ void circuit::op_simulate()
             remove("op_output.txt");
         }
         out.open("op_output.txt");
-        cerr << "The voltage vector is: " << endl << voltage_vector << endl;
+        //cerr << "The voltage vector is: " << endl << voltage_vector << endl;
         out << "The voltage vector is: " << endl << voltage_vector << endl;
 
-        cerr << endl << "The currents are: " << endl;
+        //cerr << endl << "The currents are: " << endl;
         out << endl << "The currents are: " << endl;
         
         //vector<int> inductor_positions;

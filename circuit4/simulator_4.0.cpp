@@ -1,5 +1,5 @@
 #include "circuit4.hpp"
-
+#include <ctime>
 using namespace std;
 
 double suffix_converter(string x)
@@ -70,6 +70,12 @@ int main()
     //Locating input file
     cout << "Please enter name of input file:" << endl;
     cin >> inputfile;
+    if(inputfile == "exit"){
+            cout << "Program killed" << endl;
+            return 1;
+    }
+    time_t start, finish;
+    time(&start);
     file.open(inputfile);
     
     while(!file.is_open()){
@@ -200,10 +206,14 @@ int main()
     if(op_analysis){
         cerr << "Warning: circuits with capacitors and current sources" << endl;
         final.op_simulate();
+        time(&finish);
+        cerr << "Time taken: " << fixed << setprecision(5) << difftime(finish,start)  << "seconds" << endl;
     }
 
     if(transient_analysis){
         final.trans_simulate(stop_time,timestep);
+        time(&finish);
+        cerr << "Time taken: " << fixed  << difftime(finish,start)  << setprecision(5) << "seconds" << endl;
     }else if(!op_analysis){
         cerr << "Error: transient analysis directive not deteced." << endl;
     }
