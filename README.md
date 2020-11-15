@@ -1,4 +1,4 @@
-# The-Impossible
+# C++ Circuit Simulator
 
 The Final version of the code is placed inside ./circuit4
 to compile the program please do 
